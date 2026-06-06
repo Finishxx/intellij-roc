@@ -1,0 +1,21 @@
+<idea-plugin>
+    <id>org.roc.community.intellij-roc</id>
+
+    <name>Roc</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+
+    <description><![CDATA[
+        Adds support ofr the Roc programming language in IntelliJ IDEA.
+        ]]></description>
+
+    <depends>com.intellij.modules.lsp</depends>
+
+    <resource-bundle>messages.RocMessageBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Roc file" implementationClass="org.roc.community.roc.RocFileType" language="Roc" extensions="roc"/>
+    </extensions>
+
+</idea-plugin>
