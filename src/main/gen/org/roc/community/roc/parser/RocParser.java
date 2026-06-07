@@ -36,9 +36,57 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // OP_ARROW
+  // OP_ARROW | LBRACE | RBRACE | LPAREN | RPAREN | LBRACK | RBRACK | COMMENT
+  //     | AND | APP | AS | CRASH | DBG | ELSE | EXPECT | EXPOSES | EXPOSING | FOR
+  //     | GENERATES | HAS | HOSTED | IF | IMPLEMENTS | IMPORT | IMPORTS | IN
+  //     | INTERFACE | MATCH | MODULE | OR | PACKAGE | PACKAGES | PLATFORM
+  //     | PROVIDES | REQUIRES | RETURN | TARGETS | VAR | WHERE | WHILE | WITH | BREAK
   static boolean anyToken(PsiBuilder b, int l) {
-    return consumeToken(b, OP_ARROW);
+    if (!recursion_guard_(b, l, "anyToken")) return false;
+    boolean r;
+    r = consumeToken(b, OP_ARROW);
+    if (!r) r = consumeToken(b, LBRACE);
+    if (!r) r = consumeToken(b, RBRACE);
+    if (!r) r = consumeToken(b, LPAREN);
+    if (!r) r = consumeToken(b, RPAREN);
+    if (!r) r = consumeToken(b, LBRACK);
+    if (!r) r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, COMMENT);
+    if (!r) r = consumeToken(b, AND);
+    if (!r) r = consumeToken(b, APP);
+    if (!r) r = consumeToken(b, AS);
+    if (!r) r = consumeToken(b, CRASH);
+    if (!r) r = consumeToken(b, DBG);
+    if (!r) r = consumeToken(b, ELSE);
+    if (!r) r = consumeToken(b, EXPECT);
+    if (!r) r = consumeToken(b, EXPOSES);
+    if (!r) r = consumeToken(b, EXPOSING);
+    if (!r) r = consumeToken(b, FOR);
+    if (!r) r = consumeToken(b, GENERATES);
+    if (!r) r = consumeToken(b, HAS);
+    if (!r) r = consumeToken(b, HOSTED);
+    if (!r) r = consumeToken(b, IF);
+    if (!r) r = consumeToken(b, IMPLEMENTS);
+    if (!r) r = consumeToken(b, IMPORT);
+    if (!r) r = consumeToken(b, IMPORTS);
+    if (!r) r = consumeToken(b, IN);
+    if (!r) r = consumeToken(b, INTERFACE);
+    if (!r) r = consumeToken(b, MATCH);
+    if (!r) r = consumeToken(b, MODULE);
+    if (!r) r = consumeToken(b, OR);
+    if (!r) r = consumeToken(b, PACKAGE);
+    if (!r) r = consumeToken(b, PACKAGES);
+    if (!r) r = consumeToken(b, PLATFORM);
+    if (!r) r = consumeToken(b, PROVIDES);
+    if (!r) r = consumeToken(b, REQUIRES);
+    if (!r) r = consumeToken(b, RETURN);
+    if (!r) r = consumeToken(b, TARGETS);
+    if (!r) r = consumeToken(b, VAR);
+    if (!r) r = consumeToken(b, WHERE);
+    if (!r) r = consumeToken(b, WHILE);
+    if (!r) r = consumeToken(b, WITH);
+    if (!r) r = consumeToken(b, BREAK);
+    return r;
   }
 
   /* ********************************************************** */

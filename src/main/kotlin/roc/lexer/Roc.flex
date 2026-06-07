@@ -1,8 +1,8 @@
-package org.roc.community.lexer.roc;
+package org.roc.community.roc.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
-import org.roc.community.roc.psi.RocTypes;
+import org.roc.community.roc.psi.RocTypes.*;
 import com.intellij.psi.TokenType;
 
 %%
@@ -24,12 +24,11 @@ WHITE_SPACE      = {WHITE_SPACE_CHAR}+
 // Identifiers
 LOWER_IDENT = [a-z][a-zA-Z0-9_!]*
 UPPER_IDENT = [A-Z][a-zA-Z0-9_!]*
-// Represents roc-lang/roc/src/parse/tokenize.zig#valid_number_suffixes
-SUFFIX     = {IDENTIFIER}
 
 // Literals
 
 EXPONENT      = [eE] [-+]? [0-9_]+
+SUFFIX      = [a-z][a-zA-Z0-9]* // roc-lang/roc/src/parse/tokenize.zig#valid_number_suffixes
 
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
@@ -90,5 +89,5 @@ FLOAT_LITERAL = [0-9_]+ \. [0-9_]+ {EXPONENT}?
 // TODO: Identifier after keywords
 
 {WHITE_SPACE}       { return TokenType.WHITE_SPACE; }
-"" [<\R]*           { return COMMENT; }
+"#" [^\r\n]*        { return COMMENT; }
 [^]                 { return TokenType.BAD_CHARACTER; }

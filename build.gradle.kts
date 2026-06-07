@@ -32,7 +32,7 @@ val lexers = listOf(
 lexers.forEach { (lexerName, folder, lexerPath) ->
     project.tasks.register<GenerateLexerTask>("${lexerName}Lexer") {
         sourceFile = file(lexerPath)
-        targetRootOutputDir = file("src/main/gen/$folder")
+        targetRootOutputDir = file("src/main/gen")
         purgeOldFiles.set(false)
         doLast {
             // post-process generated lexer files to match the output of the "Run JFlex Generator" action in IDEA
