@@ -1,0 +1,14 @@
+{
+  parserClass = "org.roc.community.roc.parser.RocParser"
+  elementTypeHolderClass = "org.roc.community.roc.psi.RocTypes"
+  elementTypeClass = "org.roc.community.roc.psi.RocElementType"
+  tokenTypeClass = "org.roc.community.roc.psi.RocTokenType"
+
+  tokens = [
+    OP_ARROW = '->'
+  ]
+
+}
+
+root ::= anyToken*
+private anyToken ::= OP_ARROW
