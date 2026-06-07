@@ -1,0 +1,13 @@
+		# binary operators
+		sum: a + b,
+		diff: a - b,
+		prod: a * b,
+		div: a_f64 / b_f64,
+		div_trunc: a // b,
+		rem: a % b,
+		eq: a == b,
+		neq: a != b,
+		lt: a < b,
+		lteq: a <= b,
+		gt: a > b,
+		gteq: a >= b,
