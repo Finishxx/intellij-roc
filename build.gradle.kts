@@ -37,7 +37,7 @@ lexers.forEach { (lexerName, folder, lexerPath) ->
         doLast {
             // post-process generated lexer files to match the output of the "Run JFlex Generator" action in IDEA
             val flexFileName = file(lexerPath).name
-            file("src/main/gen/$folder").walk()
+            file("src/main/gen").walk()
                 .filter { it.extension == "java" }
                 .forEach { javaFile ->
                     val original = javaFile.readText()
