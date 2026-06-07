@@ -9,7 +9,7 @@ import javax.swing.Icon
 class RocFileType : LanguageFileType(RocLanguage) {
     override fun getName(): @NonNls String = "Roc"
 
-    override fun getDescription(): @NlsContexts.Label String = "Roc file type"
+    override fun getDescription(): @NlsContexts.Label String = RocMessageBundle.message("roc.filetype.description")
 
     override fun getDefaultExtension(): @NlsSafe String = "roc"
 
