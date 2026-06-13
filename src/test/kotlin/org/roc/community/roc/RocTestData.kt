@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 fun TestCase.lexerTestDataPath(): Path = moduleRoot(javaClass).resolve("src/test/testData/lexer")
+fun TestCase.parserTestDataPath(): Path = moduleRoot(javaClass).resolve("src/test/testData/parser")
 
 private fun moduleRoot(anchor: Class<*>): Path {
     var dir: Path? = anchor.getResource("${anchor.simpleName}.class")
