@@ -1,3 +1,8 @@
 FILE
-  RocInferredTypeImpl(INFERRED_TYPE)
-    PsiElement(_)('_')
+  RocValueAnnotationImpl(VALUE_ANNOTATION)
+    PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    RocInferredTypeImpl(INFERRED_TYPE)
+      PsiElement(_)('_')

@@ -1,0 +1,1 @@
+starts_with : List(a), List(a) -> Bool where [a.is_eq : a, a -> Bool, a.Hash]

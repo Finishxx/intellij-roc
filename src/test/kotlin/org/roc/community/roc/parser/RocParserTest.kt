@@ -29,7 +29,7 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testHeaderTrailingComma() = doTest(true)
 
-    // -- types (temporarily parsed at the root; see Roc.bnf) --
+    // -- types (now exercised via value annotations; see Roc.bnf) --
 
     @Test
     fun testTypeVar() = doTest(true)
@@ -60,6 +60,20 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testTypeInferred() = doTest(true)
+
+    // -- type-declaration statements (M3.5; see Roc.bnf) --
+
+    @Test
+    fun testTypeAlias() = doTest(true)
+
+    @Test
+    fun testTypeNominal() = doTest(true)
+
+    @Test
+    fun testTypeOpaque() = doTest(true)
+
+    @Test
+    fun testAnnotationWhere() = doTest(true)
 
     // -- imports (M2) --
 

@@ -1,0 +1,9 @@
+FILE
+  RocTypeDeclImpl(TYPE_DECL)
+    RocTypeHeaderImpl(TYPE_HEADER)
+      PsiElement(UPPER_IDENT)('Token')
+    PsiWhiteSpace(' ')
+    PsiElement(::)('::')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Str')

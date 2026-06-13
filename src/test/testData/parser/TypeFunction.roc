@@ -1,1 +1,1 @@
-Str, U64 -> Bool
+f : Str, U64 -> Bool

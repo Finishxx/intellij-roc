@@ -207,6 +207,22 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitTypeDecl(@NotNull RocTypeDecl o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTypeHeader(@NotNull RocTypeHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTypeHeaderArgs(@NotNull RocTypeHeaderArgs o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTypeParam(@NotNull RocTypeParam o) {
+    visitPsiElement(o);
+  }
+
   public void visitTypeReference(@NotNull RocTypeReference o) {
     visitPsiElement(o);
   }
@@ -215,11 +231,27 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitValueAnnotation(@NotNull RocValueAnnotation o) {
+    visitPsiElement(o);
+  }
+
   public void visitValueDecl(@NotNull RocValueDecl o) {
     visitPsiElement(o);
   }
 
   public void visitVarPattern(@NotNull RocVarPattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitWhereAlias(@NotNull RocWhereAlias o) {
+    visitPsiElement(o);
+  }
+
+  public void visitWhereClause(@NotNull RocWhereClause o) {
+    visitPsiElement(o);
+  }
+
+  public void visitWhereMethod(@NotNull RocWhereMethod o) {
     visitPsiElement(o);
   }
 

@@ -58,10 +58,18 @@ public interface RocTypes {
   IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
   IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
+  IElementType TYPE_DECL = new RocElementType("TYPE_DECL");
+  IElementType TYPE_HEADER = new RocElementType("TYPE_HEADER");
+  IElementType TYPE_HEADER_ARGS = new RocElementType("TYPE_HEADER_ARGS");
+  IElementType TYPE_PARAM = new RocElementType("TYPE_PARAM");
   IElementType TYPE_REFERENCE = new RocElementType("TYPE_REFERENCE");
   IElementType UNDERSCORE_PATTERN = new RocElementType("UNDERSCORE_PATTERN");
+  IElementType VALUE_ANNOTATION = new RocElementType("VALUE_ANNOTATION");
   IElementType VALUE_DECL = new RocElementType("VALUE_DECL");
   IElementType VAR_PATTERN = new RocElementType("VAR_PATTERN");
+  IElementType WHERE_ALIAS = new RocElementType("WHERE_ALIAS");
+  IElementType WHERE_CLAUSE = new RocElementType("WHERE_CLAUSE");
+  IElementType WHERE_METHOD = new RocElementType("WHERE_METHOD");
 
   IElementType CLOSE_STRING_INTERPOLATION = new RocTokenType("CLOSE_STRING_INTERPOLATION");
   IElementType COMMA = new RocTokenType(",");
@@ -313,17 +321,41 @@ public interface RocTypes {
       else if (type == TYPE_ARGUMENTS) {
         return new RocTypeArgumentsImpl(node);
       }
+      else if (type == TYPE_DECL) {
+        return new RocTypeDeclImpl(node);
+      }
+      else if (type == TYPE_HEADER) {
+        return new RocTypeHeaderImpl(node);
+      }
+      else if (type == TYPE_HEADER_ARGS) {
+        return new RocTypeHeaderArgsImpl(node);
+      }
+      else if (type == TYPE_PARAM) {
+        return new RocTypeParamImpl(node);
+      }
       else if (type == TYPE_REFERENCE) {
         return new RocTypeReferenceImpl(node);
       }
       else if (type == UNDERSCORE_PATTERN) {
         return new RocUnderscorePatternImpl(node);
       }
+      else if (type == VALUE_ANNOTATION) {
+        return new RocValueAnnotationImpl(node);
+      }
       else if (type == VALUE_DECL) {
         return new RocValueDeclImpl(node);
       }
       else if (type == VAR_PATTERN) {
         return new RocVarPatternImpl(node);
+      }
+      else if (type == WHERE_ALIAS) {
+        return new RocWhereAliasImpl(node);
+      }
+      else if (type == WHERE_CLAUSE) {
+        return new RocWhereClauseImpl(node);
+      }
+      else if (type == WHERE_METHOD) {
+        return new RocWhereMethodImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

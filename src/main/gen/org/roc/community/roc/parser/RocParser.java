@@ -1471,11 +1471,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // importStatement | valueDecl
+  // importStatement | valueAnnotation | typeDecl | valueDecl
   static boolean statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statement")) return false;
     boolean r;
     r = importStatement(b, l + 1);
+    if (!r) r = valueAnnotation(b, l + 1);
+    if (!r) r = typeDecl(b, l + 1);
     if (!r) r = valueDecl(b, l + 1);
     return r;
   }
@@ -2010,12 +2012,11 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // statement | typeAnno | throwaway
+  // statement | throwaway
   static boolean topLevelItem(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "topLevelItem")) return false;
     boolean r;
     r = statement(b, l + 1);
-    if (!r) r = typeAnno(b, l + 1);
     if (!r) r = throwaway(b, l + 1);
     return r;
   }
@@ -2235,6 +2236,38 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause?
+  public static boolean typeDecl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeDecl")) return false;
+    if (!nextTokenIs(b, UPPER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = typeHeader(b, l + 1);
+    r = r && typeDecl_1(b, l + 1);
+    r = r && typeAnno(b, l + 1);
+    r = r && typeDecl_3(b, l + 1);
+    exit_section_(b, m, TYPE_DECL, r);
+    return r;
+  }
+
+  // OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON
+  private static boolean typeDecl_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeDecl_1")) return false;
+    boolean r;
+    r = consumeToken(b, OP_COLON);
+    if (!r) r = consumeToken(b, OP_COLON_EQUAL);
+    if (!r) r = consumeToken(b, OP_DOUBLE_COLON);
+    return r;
+  }
+
+  // whereClause?
+  private static boolean typeDecl_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeDecl_3")) return false;
+    whereClause(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // primaryType (COMMA primaryType)*
   static boolean typeFnArgs(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeFnArgs")) return false;
@@ -2266,6 +2299,97 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = r && primaryType(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // UPPER_IDENT typeHeaderArgs?
+  public static boolean typeHeader(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeader")) return false;
+    if (!nextTokenIs(b, UPPER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, UPPER_IDENT);
+    r = r && typeHeader_1(b, l + 1);
+    exit_section_(b, m, TYPE_HEADER, r);
+    return r;
+  }
+
+  // typeHeaderArgs?
+  private static boolean typeHeader_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeader_1")) return false;
+    typeHeaderArgs(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // (NO_SPACE_LPAREN | LPAREN) (typeParam (COMMA typeParam)* COMMA?)? RPAREN
+  public static boolean typeHeaderArgs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs")) return false;
+    if (!nextTokenIs(b, "<type header args>", LPAREN, NO_SPACE_LPAREN)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, TYPE_HEADER_ARGS, "<type header args>");
+    r = typeHeaderArgs_0(b, l + 1);
+    r = r && typeHeaderArgs_1(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // NO_SPACE_LPAREN | LPAREN
+  private static boolean typeHeaderArgs_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_0")) return false;
+    boolean r;
+    r = consumeToken(b, NO_SPACE_LPAREN);
+    if (!r) r = consumeToken(b, LPAREN);
+    return r;
+  }
+
+  // (typeParam (COMMA typeParam)* COMMA?)?
+  private static boolean typeHeaderArgs_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_1")) return false;
+    typeHeaderArgs_1_0(b, l + 1);
+    return true;
+  }
+
+  // typeParam (COMMA typeParam)* COMMA?
+  private static boolean typeHeaderArgs_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = typeParam(b, l + 1);
+    r = r && typeHeaderArgs_1_0_1(b, l + 1);
+    r = r && typeHeaderArgs_1_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA typeParam)*
+  private static boolean typeHeaderArgs_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!typeHeaderArgs_1_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "typeHeaderArgs_1_0_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA typeParam
+  private static boolean typeHeaderArgs_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && typeParam(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean typeHeaderArgs_1_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_2")) return false;
+    consumeToken(b, COMMA);
+    return true;
   }
 
   /* ********************************************************** */
@@ -2302,6 +2426,19 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LOWER_IDENT | NAMED_UNDERSCORE | UNDERSCORE
+  public static boolean typeParam(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeParam")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, TYPE_PARAM, "<type param>");
+    r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    if (!r) r = consumeToken(b, UNDERSCORE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // typeName typeArguments?
   public static boolean typeReference(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeReference")) return false;
@@ -2334,6 +2471,37 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
+  public static boolean valueAnnotation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "valueAnnotation")) return false;
+    if (!nextTokenIs(b, "<value annotation>", LOWER_IDENT, NAMED_UNDERSCORE)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, VALUE_ANNOTATION, "<value annotation>");
+    r = valueAnnotation_0(b, l + 1);
+    r = r && consumeToken(b, OP_COLON);
+    r = r && typeAnno(b, l + 1);
+    r = r && valueAnnotation_3(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // LOWER_IDENT | NAMED_UNDERSCORE
+  private static boolean valueAnnotation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "valueAnnotation_0")) return false;
+    boolean r;
+    r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    return r;
+  }
+
+  // whereClause?
+  private static boolean valueAnnotation_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "valueAnnotation_3")) return false;
+    whereClause(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // patternNoAlts OP_ASSIGN exprStub
   public static boolean valueDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueDecl")) return false;
@@ -2355,6 +2523,108 @@ public class RocParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, KW_VAR, LOWER_IDENT);
     exit_section_(b, m, VAR_PATTERN, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
+  public static boolean whereAlias(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereAlias")) return false;
+    if (!nextTokenIs(b, LOWER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LOWER_IDENT);
+    r = r && whereAlias_1(b, l + 1);
+    exit_section_(b, m, WHERE_ALIAS, r);
+    return r;
+  }
+
+  // NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT
+  private static boolean whereAlias_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereAlias_1")) return false;
+    boolean r;
+    r = consumeToken(b, NO_SPACE_DOT_UPPER_IDENT);
+    if (!r) r = consumeToken(b, DOT_UPPER_IDENT);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // KW_WHERE LBRACK whereClauseItem (COMMA whereClauseItem)* COMMA? RBRACK
+  public static boolean whereClause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClause")) return false;
+    if (!nextTokenIs(b, KW_WHERE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, KW_WHERE, LBRACK);
+    r = r && whereClauseItem(b, l + 1);
+    r = r && whereClause_3(b, l + 1);
+    r = r && whereClause_4(b, l + 1);
+    r = r && consumeToken(b, RBRACK);
+    exit_section_(b, m, WHERE_CLAUSE, r);
+    return r;
+  }
+
+  // (COMMA whereClauseItem)*
+  private static boolean whereClause_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClause_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!whereClause_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "whereClause_3", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA whereClauseItem
+  private static boolean whereClause_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClause_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && whereClauseItem(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean whereClause_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClause_4")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // whereMethod | whereAlias
+  static boolean whereClauseItem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseItem")) return false;
+    if (!nextTokenIs(b, LOWER_IDENT)) return false;
+    boolean r;
+    r = whereMethod(b, l + 1);
+    if (!r) r = whereAlias(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLON typeAnno
+  public static boolean whereMethod(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereMethod")) return false;
+    if (!nextTokenIs(b, LOWER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LOWER_IDENT);
+    r = r && whereMethod_1(b, l + 1);
+    r = r && consumeToken(b, OP_COLON);
+    r = r && typeAnno(b, l + 1);
+    exit_section_(b, m, WHERE_METHOD, r);
+    return r;
+  }
+
+  // NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT
+  private static boolean whereMethod_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereMethod_1")) return false;
+    boolean r;
+    r = consumeToken(b, NO_SPACE_DOT_LOWER_IDENT);
+    if (!r) r = consumeToken(b, DOT_LOWER_IDENT);
     return r;
   }
 

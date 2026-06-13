@@ -1,1 +1,1 @@
-[Ok(a), Err(b)]
+x : [Ok(a), Err(b)]

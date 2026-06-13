@@ -1,1 +1,1 @@
-{ name : Str, age : U64 }
+x : { name : Str, age : U64 }

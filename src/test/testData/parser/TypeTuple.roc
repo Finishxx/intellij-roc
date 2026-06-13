@@ -1,1 +1,1 @@
-(Str, Bool)
+x : (Str, Bool)
