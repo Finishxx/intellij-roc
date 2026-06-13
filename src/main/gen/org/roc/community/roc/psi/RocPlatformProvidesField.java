@@ -5,21 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocHeader extends PsiElement {
+public interface RocPlatformProvidesField extends PsiElement {
 
   @Nullable
-  RocAppHeader getAppHeader();
+  RocString getString();
 
   @Nullable
-  RocHostedHeader getHostedHeader();
+  PsiElement getFloat();
 
   @Nullable
-  RocModuleHeader getModuleHeader();
+  PsiElement getInt();
 
   @Nullable
-  RocPackageHeader getPackageHeader();
-
-  @Nullable
-  RocPlatformHeader getPlatformHeader();
+  PsiElement getUpperIdent();
 
 }

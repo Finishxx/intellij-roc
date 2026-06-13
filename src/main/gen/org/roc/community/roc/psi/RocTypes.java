@@ -30,12 +30,20 @@ public interface RocTypes {
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
   IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
+  IElementType PLATFORM_HEADER = new RocElementType("PLATFORM_HEADER");
+  IElementType PLATFORM_PROVIDES = new RocElementType("PLATFORM_PROVIDES");
+  IElementType PLATFORM_PROVIDES_FIELD = new RocElementType("PLATFORM_PROVIDES_FIELD");
+  IElementType PLATFORM_REQUIRES = new RocElementType("PLATFORM_REQUIRES");
+  IElementType PLATFORM_TARGETS = new RocElementType("PLATFORM_TARGETS");
   IElementType PROVIDES = new RocElementType("PROVIDES");
   IElementType RECORD_PATTERN = new RocElementType("RECORD_PATTERN");
   IElementType RECORD_PATTERN_FIELD = new RocElementType("RECORD_PATTERN_FIELD");
   IElementType RECORD_TYPE = new RocElementType("RECORD_TYPE");
   IElementType RECORD_TYPE_EXT = new RocElementType("RECORD_TYPE_EXT");
   IElementType RECORD_TYPE_FIELD = new RocElementType("RECORD_TYPE_FIELD");
+  IElementType REQUIRES_ENTRY = new RocElementType("REQUIRES_ENTRY");
+  IElementType REQUIRES_FOR_ALIAS = new RocElementType("REQUIRES_FOR_ALIAS");
+  IElementType REQUIRES_FOR_CLAUSE = new RocElementType("REQUIRES_FOR_CLAUSE");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
   IElementType TAG_PATTERN = new RocElementType("TAG_PATTERN");
@@ -43,6 +51,10 @@ public interface RocTypes {
   IElementType TAG_UNION_EXT = new RocElementType("TAG_UNION_EXT");
   IElementType TAG_UNION_MEMBER = new RocElementType("TAG_UNION_MEMBER");
   IElementType TAG_UNION_TYPE = new RocElementType("TAG_UNION_TYPE");
+  IElementType TARGETS_FIELD = new RocElementType("TARGETS_FIELD");
+  IElementType TARGET_FILE = new RocElementType("TARGET_FILE");
+  IElementType TARGET_LINK_ENTRY = new RocElementType("TARGET_LINK_ENTRY");
+  IElementType TARGET_LINK_TYPE = new RocElementType("TARGET_LINK_TYPE");
   IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
   IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
@@ -217,6 +229,21 @@ public interface RocTypes {
       else if (type == PACKAGE_HEADER) {
         return new RocPackageHeaderImpl(node);
       }
+      else if (type == PLATFORM_HEADER) {
+        return new RocPlatformHeaderImpl(node);
+      }
+      else if (type == PLATFORM_PROVIDES) {
+        return new RocPlatformProvidesImpl(node);
+      }
+      else if (type == PLATFORM_PROVIDES_FIELD) {
+        return new RocPlatformProvidesFieldImpl(node);
+      }
+      else if (type == PLATFORM_REQUIRES) {
+        return new RocPlatformRequiresImpl(node);
+      }
+      else if (type == PLATFORM_TARGETS) {
+        return new RocPlatformTargetsImpl(node);
+      }
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);
       }
@@ -234,6 +261,15 @@ public interface RocTypes {
       }
       else if (type == RECORD_TYPE_FIELD) {
         return new RocRecordTypeFieldImpl(node);
+      }
+      else if (type == REQUIRES_ENTRY) {
+        return new RocRequiresEntryImpl(node);
+      }
+      else if (type == REQUIRES_FOR_ALIAS) {
+        return new RocRequiresForAliasImpl(node);
+      }
+      else if (type == REQUIRES_FOR_CLAUSE) {
+        return new RocRequiresForClauseImpl(node);
       }
       else if (type == STRING) {
         return new RocStringImpl(node);
@@ -255,6 +291,18 @@ public interface RocTypes {
       }
       else if (type == TAG_UNION_TYPE) {
         return new RocTagUnionTypeImpl(node);
+      }
+      else if (type == TARGETS_FIELD) {
+        return new RocTargetsFieldImpl(node);
+      }
+      else if (type == TARGET_FILE) {
+        return new RocTargetFileImpl(node);
+      }
+      else if (type == TARGET_LINK_ENTRY) {
+        return new RocTargetLinkEntryImpl(node);
+      }
+      else if (type == TARGET_LINK_TYPE) {
+        return new RocTargetLinkTypeImpl(node);
       }
       else if (type == TUPLE_PATTERN) {
         return new RocTuplePatternImpl(node);

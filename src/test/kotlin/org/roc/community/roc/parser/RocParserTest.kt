@@ -109,4 +109,18 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testPatternAlternatives() = doTest(true)
+
+    // -- platform header (the one previously-deferred header; see Roc.bnf) --
+
+    @Test
+    fun testPlatformHeaderSimple() = doTest(true)
+
+    @Test
+    fun testPlatformHeaderForClause() = doTest(true)
+
+    @Test
+    fun testPlatformHeaderLegacyRequires() = doTest(true)
+
+    @Test
+    fun testPlatformHeaderTargets() = doTest(true)
 }

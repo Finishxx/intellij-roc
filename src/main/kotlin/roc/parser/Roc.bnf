@@ -153,11 +153,10 @@ private throwaway ::=
 
 
 // == headers ================================================
-// NOTE: `platform` is intentionally absent — its `requires { ... }` block
-// contains full type annotations, which need a type-annotation grammar we
-// haven't built yet. Its decoded grammar is recorded at the bottom of this
-// file; add `| platformHeader` once `typeAnno` lands.
-header ::= appHeader | moduleHeader | packageHeader | hostedHeader
+// Dispatched on a distinct leading keyword (app/module/package/hosted/platform),
+// so the alternatives are first-token-disjoint and order is irrelevant
+// platform header is difficult and uses many other primitives is at the bottom of this file
+header ::= appHeader | moduleHeader | packageHeader | hostedHeader | platformHeader
 
 appHeader     ::= KW_APP provides packages
 moduleHeader  ::= KW_MODULE exposes
@@ -305,21 +304,34 @@ tagUnionExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
 inferredType    ::= UNDERSCORE        // _
 inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 
-// == DEFERRED: platform header ==============================
-// `typeAnno` now exists, so the only remaining pieces are the requires-block
-// for-clause and the targets section. Decoded grammar:
-//
-//   platformHeader ::= PLATFORM string
-//                      REQUIRES requiresBlock
-//                      EXPOSES  exposedList
-//                      PACKAGES packages
-//                      PROVIDES recordFieldBlock      // '{' field,* '}'
-//                      targetsSection?
-//
-//   requiresBlock ::= LBRACE (requiresEntry (COMMA requiresEntry)* COMMA?)? RBRACE
-//     requiresEntry ::= (LBRACK forClauseAlias (COMMA forClauseAlias)* RBRACK FOR)?
-//                       LOWER_IDENT OP_COLON typeAnno
-//     forClauseAlias ::= UPPER_IDENT OP_COLON LOWER_IDENT
-//     (legacy `requires {} { ... }` empty-rigids form also exists)
-//
-//   targetsSection is optional and non-trivial (see parseTargetsSection).
+// == platform header ========================================
+// Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]
+platformHeader ::= KW_PLATFORM string
+                   KW_REQUIRES platformRequires
+                   KW_EXPOSES  exposes
+                   KW_PACKAGES packages
+                   KW_PROVIDES platformProvides
+                   platformTargets?
+
+platformRequires ::= LBRACE RBRACE LBRACE requiresEntries? RBRACE
+                   | LBRACE requiresEntries? RBRACE
+private requiresEntries ::= requiresEntry (COMMA requiresEntry)* COMMA?
+// `main! : Type`, optionally prefixed by a for-clause `[Model : model] for`.
+requiresEntry     ::= requiresForClause? LOWER_IDENT OP_COLON typeAnno
+requiresForClause ::= LBRACK requiresForAlias (COMMA requiresForAlias)* RBRACK KW_FOR
+requiresForAlias  ::= UPPER_IDENT OP_COLON LOWER_IDENT
+
+// `provides { name: <expr>, … }` — record-style, unlike the app header's `[ … ]`
+// provides. Values are expressions (always a string path in practice); `exprStub`
+// is the shared M4 placeholder.
+platformProvides      ::= LBRACE (platformProvidesField (COMMA platformProvidesField)* COMMA?)? RBRACE
+platformProvidesField ::= LOWER_IDENT (OP_COLON exprStub)?
+
+// optional `targets: { files: "…", exe: { x64mac: ["libhost.a", app], … }, … }`.
+// A target field's value is a string (files path) or a link-type block; a link
+// entry maps a triple name to a bracketed file list of strings / idents / `app`.
+platformTargets ::= KW_TARGETS OP_COLON LBRACE (targetsField (COMMA targetsField)* COMMA?)? RBRACE
+targetsField    ::= LOWER_IDENT OP_COLON (string | targetLinkType)
+targetLinkType  ::= LBRACE (targetLinkEntry (COMMA targetLinkEntry)* COMMA?)? RBRACE
+targetLinkEntry ::= LOWER_IDENT OP_COLON LBRACK (targetFile (COMMA targetFile)* COMMA?)? RBRACK
+targetFile      ::= string | LOWER_IDENT | KW_APP

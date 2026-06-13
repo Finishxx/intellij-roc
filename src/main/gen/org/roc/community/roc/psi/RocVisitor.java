@@ -95,6 +95,26 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitPlatformHeader(@NotNull RocPlatformHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPlatformProvides(@NotNull RocPlatformProvides o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPlatformProvidesField(@NotNull RocPlatformProvidesField o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPlatformRequires(@NotNull RocPlatformRequires o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPlatformTargets(@NotNull RocPlatformTargets o) {
+    visitPsiElement(o);
+  }
+
   public void visitProvides(@NotNull RocProvides o) {
     visitPsiElement(o);
   }
@@ -116,6 +136,18 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitRecordTypeField(@NotNull RocRecordTypeField o) {
+    visitPsiElement(o);
+  }
+
+  public void visitRequiresEntry(@NotNull RocRequiresEntry o) {
+    visitPsiElement(o);
+  }
+
+  public void visitRequiresForAlias(@NotNull RocRequiresForAlias o) {
+    visitPsiElement(o);
+  }
+
+  public void visitRequiresForClause(@NotNull RocRequiresForClause o) {
     visitPsiElement(o);
   }
 
@@ -144,6 +176,22 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitTagUnionType(@NotNull RocTagUnionType o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTargetFile(@NotNull RocTargetFile o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTargetLinkEntry(@NotNull RocTargetLinkEntry o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTargetLinkType(@NotNull RocTargetLinkType o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTargetsField(@NotNull RocTargetsField o) {
     visitPsiElement(o);
   }
 

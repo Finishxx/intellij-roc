@@ -11,14 +11,14 @@ import static org.roc.community.roc.psi.RocTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.roc.community.roc.psi.*;
 
-public class RocHeaderImpl extends ASTWrapperPsiElement implements RocHeader {
+public class RocPlatformProvidesFieldImpl extends ASTWrapperPsiElement implements RocPlatformProvidesField {
 
-  public RocHeaderImpl(@NotNull ASTNode node) {
+  public RocPlatformProvidesFieldImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RocVisitor visitor) {
-    visitor.visitHeader(this);
+    visitor.visitPlatformProvidesField(this);
   }
 
   @Override
@@ -29,32 +29,26 @@ public class RocHeaderImpl extends ASTWrapperPsiElement implements RocHeader {
 
   @Override
   @Nullable
-  public RocAppHeader getAppHeader() {
-    return findChildByClass(RocAppHeader.class);
+  public RocString getString() {
+    return findChildByClass(RocString.class);
   }
 
   @Override
   @Nullable
-  public RocHostedHeader getHostedHeader() {
-    return findChildByClass(RocHostedHeader.class);
+  public PsiElement getFloat() {
+    return findChildByType(FLOAT);
   }
 
   @Override
   @Nullable
-  public RocModuleHeader getModuleHeader() {
-    return findChildByClass(RocModuleHeader.class);
+  public PsiElement getInt() {
+    return findChildByType(INT);
   }
 
   @Override
   @Nullable
-  public RocPackageHeader getPackageHeader() {
-    return findChildByClass(RocPackageHeader.class);
-  }
-
-  @Override
-  @Nullable
-  public RocPlatformHeader getPlatformHeader() {
-    return findChildByClass(RocPlatformHeader.class);
+  public PsiElement getUpperIdent() {
+    return findChildByType(UPPER_IDENT);
   }
 
 }
