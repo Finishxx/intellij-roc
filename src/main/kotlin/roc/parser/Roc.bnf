@@ -122,7 +122,10 @@
 
 }
 
-root ::= header | throwaway
+// TEMP (types milestone): `typeAnno` is exposed at the root so we can golden-test
+// bare type annotations before the statement loop / `type_anno` statements exist.
+// Drop the `typeAnno` alternative once statements land.
+root ::= header | typeAnno | throwaway
 private throwaway ::=
       LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
     | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
@@ -168,9 +171,67 @@ string ::= STRING_START stringElement* STRING_END
 private stringElement ::= STRING_PART | stringInterpolation
 stringInterpolation ::= OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION // M1 stub: no inner expr yet
 
+// == type annotations =======================================
+// Faithful to parseTypeAnno in the Zig reference (roc-lang/src/parse/Parser.zig).
+//
+// The arrow function is the lowest-precedence type; its argument list may be a
+// bare comma list (`Str, Str -> Str`). `functionType` REQUIRES a trailing arrow,
+// so for a plain type it backtracks to `primaryType`. That same backtracking is
+// what lets a record field type stop at the next field (`{ a: Str, b: U64 }`)
+// and an apply arg stop at the next arg (`Dict(Str, List(U64))`) — the comma
+// list is only kept when an arrow actually follows.
+//
+// KNOWN LIMITATION: an unparenthesized arrow used as a NON-final argument inside
+// `( )` / apply args (e.g. `Dict(k, v -> w)`) is grabbed as one comma-grouped
+// function rather than two args. Roc flips comma/arrow precedence per-context via
+// a lookahead flag; we don't yet. Rare in practice — parenthesize for now.
+// typeAnno / primaryType are dispatch-only (private) so the concrete type node
+// (functionType, typeReference, recordType, …) attaches directly, with no
+// redundant wrapper — same idea as `header`.
+private typeAnno ::= functionType | primaryType
+
+functionType ::= typeFnArgs (OP_ARROW | OP_FAT_ARROW) typeAnno
+private typeFnArgs ::= primaryType (COMMA primaryType)*
+
+private primaryType ::= typeReference
+                      | tupleType
+                      | recordType
+                      | tagUnionType
+                      | inferredType
+                      | inferredTypeVar
+
+// Str, Bool, Foo.Bar, json.Mod.Type, List(a), Dict(k, v).
+// Qualification is built from the no-space dotted tokens the lexer emits, e.g.
+// `Json.Decoder` -> UPPER_IDENT NO_SPACE_DOT_UPPER_IDENT. Application requires a
+// no-space '(' (NO_SPACE_LPAREN), matching `List(a)` but not `List (a)`.
+typeReference ::= typeName typeArguments?
+private typeName ::= (UPPER_IDENT | LOWER_IDENT) qualifierSegment*
+private qualifierSegment ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
+typeArguments ::= NO_SPACE_LPAREN (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
+
+// (a), (a, b), (a -> b). A standalone '(' may be no-space or spaced.
+tupleType ::= (NO_SPACE_LPAREN | LPAREN) (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
+
+// { name: Type, ..ext } — `..` / `..rest` extension must be last.
+recordType ::= LBRACE recordTypeBody? RBRACE
+private recordTypeBody ::= recordTypeField (COMMA recordTypeField)* (COMMA recordTypeExt)? COMMA?
+                         | recordTypeExt
+recordTypeField ::= LOWER_IDENT OP_COLON typeAnno
+recordTypeExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
+
+// [Ok(a), Err(b), ..ext] — open-union extension must be last.
+tagUnionType ::= LBRACK tagUnionBody? RBRACK
+private tagUnionBody ::= tagUnionMember (COMMA tagUnionMember)* (COMMA tagUnionExt)? COMMA?
+                       | tagUnionExt
+tagUnionMember ::= UPPER_IDENT typeArguments?
+tagUnionExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
+
+inferredType    ::= UNDERSCORE        // _
+inferredTypeVar ::= NAMED_UNDERSCORE  // _name
+
 // == DEFERRED: platform header ==============================
-// Blocked on the type-annotation grammar (parseTypeAnno in the Zig reference,
-// roc-lang/src/parse/Parser.zig). Decoded here so it's ready to wire up:
+// `typeAnno` now exists, so the only remaining pieces are the requires-block
+// for-clause and the targets section. Decoded grammar:
 //
 //   platformHeader ::= PLATFORM string
 //                      REQUIRES requiresBlock
@@ -181,11 +242,8 @@ stringInterpolation ::= OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION // 
 //
 //   requiresBlock ::= LBRACE (requiresEntry (COMMA requiresEntry)* COMMA?)? RBRACE
 //     requiresEntry ::= (LBRACK forClauseAlias (COMMA forClauseAlias)* RBRACK FOR)?
-//                       LOWER_IDENT OP_COLON typeAnno     // <-- needs typeAnno
+//                       LOWER_IDENT OP_COLON typeAnno
 //     forClauseAlias ::= UPPER_IDENT OP_COLON LOWER_IDENT
 //     (legacy `requires {} { ... }` empty-rigids form also exists)
 //
 //   targetsSection is optional and non-trivial (see parseTargetsSection).
-//
-// Implement `typeAnno` first (ty_var / ty / apply / fn with -> and => /
-// tuples / records), then this header is straightforward.

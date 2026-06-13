@@ -1,0 +1,10 @@
+FILE
+  RocTupleTypeImpl(TUPLE_TYPE)
+    PsiElement(()('(')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Str')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Bool')
+    PsiElement())(')')

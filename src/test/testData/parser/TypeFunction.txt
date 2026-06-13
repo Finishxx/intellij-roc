@@ -1,0 +1,13 @@
+FILE
+  RocFunctionTypeImpl(FUNCTION_TYPE)
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Str')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('U64')
+    PsiWhiteSpace(' ')
+    PsiElement(->)('->')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Bool')

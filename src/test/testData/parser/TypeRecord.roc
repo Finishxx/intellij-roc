@@ -1,0 +1,1 @@
+{ name : Str, age : U64 }

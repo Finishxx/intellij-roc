@@ -1,0 +1,10 @@
+FILE
+  RocFunctionTypeImpl(FUNCTION_TYPE)
+    RocRecordTypeImpl(RECORD_TYPE)
+      PsiElement({)('{')
+      PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('Str')

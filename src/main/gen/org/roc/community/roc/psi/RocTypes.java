@@ -11,15 +11,27 @@ public interface RocTypes {
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
+  IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
   IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
+  IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
+  IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
   IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
   IElementType PROVIDES = new RocElementType("PROVIDES");
+  IElementType RECORD_TYPE = new RocElementType("RECORD_TYPE");
+  IElementType RECORD_TYPE_EXT = new RocElementType("RECORD_TYPE_EXT");
+  IElementType RECORD_TYPE_FIELD = new RocElementType("RECORD_TYPE_FIELD");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
+  IElementType TAG_UNION_EXT = new RocElementType("TAG_UNION_EXT");
+  IElementType TAG_UNION_MEMBER = new RocElementType("TAG_UNION_MEMBER");
+  IElementType TAG_UNION_TYPE = new RocElementType("TAG_UNION_TYPE");
+  IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
+  IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
+  IElementType TYPE_REFERENCE = new RocElementType("TYPE_REFERENCE");
 
   IElementType CLOSE_STRING_INTERPOLATION = new RocTokenType("CLOSE_STRING_INTERPOLATION");
   IElementType COMMA = new RocTokenType(",");
@@ -130,11 +142,20 @@ public interface RocTypes {
       else if (type == EXPOSES) {
         return new RocExposesImpl(node);
       }
+      else if (type == FUNCTION_TYPE) {
+        return new RocFunctionTypeImpl(node);
+      }
       else if (type == HEADER) {
         return new RocHeaderImpl(node);
       }
       else if (type == HOSTED_HEADER) {
         return new RocHostedHeaderImpl(node);
+      }
+      else if (type == INFERRED_TYPE) {
+        return new RocInferredTypeImpl(node);
+      }
+      else if (type == INFERRED_TYPE_VAR) {
+        return new RocInferredTypeVarImpl(node);
       }
       else if (type == MODULE_HEADER) {
         return new RocModuleHeaderImpl(node);
@@ -151,11 +172,38 @@ public interface RocTypes {
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);
       }
+      else if (type == RECORD_TYPE) {
+        return new RocRecordTypeImpl(node);
+      }
+      else if (type == RECORD_TYPE_EXT) {
+        return new RocRecordTypeExtImpl(node);
+      }
+      else if (type == RECORD_TYPE_FIELD) {
+        return new RocRecordTypeFieldImpl(node);
+      }
       else if (type == STRING) {
         return new RocStringImpl(node);
       }
       else if (type == STRING_INTERPOLATION) {
         return new RocStringInterpolationImpl(node);
+      }
+      else if (type == TAG_UNION_EXT) {
+        return new RocTagUnionExtImpl(node);
+      }
+      else if (type == TAG_UNION_MEMBER) {
+        return new RocTagUnionMemberImpl(node);
+      }
+      else if (type == TAG_UNION_TYPE) {
+        return new RocTagUnionTypeImpl(node);
+      }
+      else if (type == TUPLE_TYPE) {
+        return new RocTupleTypeImpl(node);
+      }
+      else if (type == TYPE_ARGUMENTS) {
+        return new RocTypeArgumentsImpl(node);
+      }
+      else if (type == TYPE_REFERENCE) {
+        return new RocTypeReferenceImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

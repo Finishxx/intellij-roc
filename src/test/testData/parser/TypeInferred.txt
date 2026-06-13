@@ -1,0 +1,3 @@
+FILE
+  RocInferredTypeImpl(INFERRED_TYPE)
+    PsiElement(_)('_')

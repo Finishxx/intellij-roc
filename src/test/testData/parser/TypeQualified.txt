@@ -1,0 +1,9 @@
+FILE
+  RocTypeReferenceImpl(TYPE_REFERENCE)
+    PsiElement(UPPER_IDENT)('Json')
+    PsiElement(NO_SPACE_DOT_UPPER_IDENT)('.Decoder')
+    RocTypeArgumentsImpl(TYPE_ARGUMENTS)
+      PsiElement(NO_SPACE_LPAREN)('(')
+      RocTypeReferenceImpl(TYPE_REFERENCE)
+        PsiElement(LOWER_IDENT)('a')
+      PsiElement())(')')

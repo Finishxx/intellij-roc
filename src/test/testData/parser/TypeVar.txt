@@ -1,0 +1,3 @@
+FILE
+  RocTypeReferenceImpl(TYPE_REFERENCE)
+    PsiElement(LOWER_IDENT)('elem')
