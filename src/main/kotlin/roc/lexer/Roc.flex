@@ -178,40 +178,40 @@ CHAR_LITERAL  = "'" ( {ESCAPE} | [^'\\\n] ) "'"
 
   // keywords BEFORE the identifier rule (ties resolve to the earlier rule;
   // a longer ident like `apple` still beats `app` by longest match). and/or are operators in Roc.
-  "and"                { return tok(AND); }
-  "or"                 { return tok(OR); }
-  "app"                { return tok(APP); }
-  "as"                 { return tok(AS); }
-  "crash"              { return tok(CRASH); }
-  "dbg"                { return tok(DBG); }
-  "else"               { return tok(ELSE); }
-  "expect"             { return tok(EXPECT); }
-  "exposes"            { return tok(EXPOSES); }
-  "exposing"           { return tok(EXPOSING); }
-  "for"                { return tok(FOR); }
-  "generates"          { return tok(GENERATES); }
-  "has"                { return tok(HAS); }
-  "hosted"             { return tok(HOSTED); }
-  "if"                 { return tok(IF); }
-  "implements"         { return tok(IMPLEMENTS); }
-  "import"             { return tok(IMPORT); }
-  "imports"            { return tok(IMPORTS); }
-  "in"                 { return tok(IN); }
-  "interface"          { return tok(INTERFACE); }
-  "match"              { return tok(MATCH); }
-  "module"             { return tok(MODULE); }
-  "package"            { return tok(PACKAGE); }
-  "packages"           { return tok(PACKAGES); }
-  "platform"           { return tok(PLATFORM); }
-  "provides"           { return tok(PROVIDES); }
-  "requires"           { return tok(REQUIRES); }
-  "return"             { return tok(RETURN); }
-  "targets"            { return tok(TARGETS); }
-  "var"                { return tok(VAR); }
-  "where"              { return tok(WHERE); }
-  "while"              { return tok(WHILE); }
-  "with"               { return tok(WITH); }
-  "break"              { return tok(BREAK); }
+  "and"                { return tok(KW_AND); }
+  "or"                 { return tok(KW_OR); }
+  "app"                { return tok(KW_APP); }
+  "as"                 { return tok(KW_AS); }
+  "crash"              { return tok(KW_CRASH); }
+  "dbg"                { return tok(KW_DBG); }
+  "else"               { return tok(KW_ELSE); }
+  "expect"             { return tok(KW_EXPECT); }
+  "exposes"            { return tok(KW_EXPOSES); }
+  "exposing"           { return tok(KW_EXPOSING); }
+  "for"                { return tok(KW_FOR); }
+  "generates"          { return tok(KW_GENERATES); }
+  "has"                { return tok(KW_HAS); }
+  "hosted"             { return tok(KW_HOSTED); }
+  "if"                 { return tok(KW_IF); }
+  "implements"         { return tok(KW_IMPLEMENTS); }
+  "import"             { return tok(KW_IMPORT); }
+  "imports"            { return tok(KW_IMPORTS); }
+  "in"                 { return tok(KW_IN); }
+  "interface"          { return tok(KW_INTERFACE); }
+  "match"              { return tok(KW_MATCH); }
+  "module"             { return tok(KW_MODULE); }
+  "package"            { return tok(KW_PACKAGE); }
+  "packages"           { return tok(KW_PACKAGES); }
+  "platform"           { return tok(KW_PLATFORM); }
+  "provides"           { return tok(KW_PROVIDES); }
+  "requires"           { return tok(KW_REQUIRES); }
+  "return"             { return tok(KW_RETURN); }
+  "targets"            { return tok(KW_TARGETS); }
+  "var"                { return tok(KW_VAR); }
+  "where"              { return tok(KW_WHERE); }
+  "while"              { return tok(KW_WHILE); }
+  "with"               { return tok(KW_WITH); }
+  "break"              { return tok(KW_BREAK); }
 
   // identifiers (+ the `$name` reusable-ident form, tokenize.zig:1509)
   {LOWER_IDENT_M}      { return tok(LOWER_IDENT); }

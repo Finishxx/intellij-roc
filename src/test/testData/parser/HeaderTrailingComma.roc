@@ -1,0 +1,1 @@
+app [main,] { pf: platform "../basic-cli/main.roc", json: "json.roc", }

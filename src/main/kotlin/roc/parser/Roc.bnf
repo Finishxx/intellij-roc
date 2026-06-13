@@ -84,44 +84,44 @@
     COMMENT
 
     // keywords (and/or are operators in Roc but kept as named tokens)
-    AND = 'and'
-    APP = 'app'
-    AS = 'as'
-    CRASH = 'crash'
-    DBG = 'dbg'
-    ELSE = 'else'
-    EXPECT = 'expect'
-    EXPOSES = 'exposes'
-    EXPOSING = 'exposing'
-    FOR = 'for'
-    GENERATES = 'generates'
-    HAS = 'has'
-    HOSTED = 'hosted'
-    IF = 'if'
-    IMPLEMENTS = 'implements'
-    IMPORT = 'import'
-    IMPORTS = 'imports'
-    IN = 'in'
-    INTERFACE = 'interface'
-    MATCH = 'match'
-    MODULE = 'module'
-    OR = 'or'
-    PACKAGE = 'package'
-    PLATFORM = 'platform'
-    REQUIRES = 'requires'
-    RETURN = 'return'
-    TARGETS = 'targets'
-    VAR = 'var'
-    WHERE = 'where'
-    WHILE = 'while'
-    WITH = 'with'
-    BREAK = 'break'
+    KW_AND = 'and'
+    KW_APP = 'app'
+    KW_AS = 'as'
+    KW_CRASH = 'crash'
+    KW_DBG = 'dbg'
+    KW_ELSE = 'else'
+    KW_EXPECT = 'expect'
+    KW_EXPOSES = 'exposes'
+    KW_EXPOSING = 'exposing'
+    KW_FOR = 'for'
+    KW_GENERATES = 'generates'
+    KW_HAS = 'has'
+    KW_HOSTED = 'hosted'
+    KW_IF = 'if'
+    KW_IMPLEMENTS = 'implements'
+    KW_IMPORT = 'import'
+    KW_IMPORTS = 'imports'
+    KW_IN = 'in'
+    KW_INTERFACE = 'interface'
+    KW_MATCH = 'match'
+    KW_MODULE = 'module'
+    KW_OR = 'or'
+    KW_PACKAGE = 'package'
+    KW_PACKAGES = 'packages'
+    KW_PLATFORM = 'platform'
+    KW_PROVIDES = 'provides'
+    KW_REQUIRES = 'requires'
+    KW_RETURN = 'return'
+    KW_TARGETS = 'targets'
+    KW_VAR = 'var'
+    KW_WHERE = 'where'
+    KW_WHILE = 'while'
+    KW_WITH = 'with'
+    KW_BREAK = 'break'
   ]
 
 }
 
-// -- grammar root -------------------------------------------
-// root ::= header
 root ::= header | throwaway
 private throwaway ::=
       LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
@@ -139,25 +139,53 @@ private throwaway ::=
     | STRING_START | STRING_END | STRING_PART | MULTILINE_STRING_START
     | OPEN_STRING_INTERPOLATION | CLOSE_STRING_INTERPOLATION
     | COMMENT
-    | AND | APP | AS | CRASH | DBG | ELSE | EXPECT | EXPOSES | EXPOSING | FOR
-    | GENERATES | HAS | HOSTED | IF | IMPLEMENTS | IMPORT | IMPORTS | IN
-    | INTERFACE | MATCH | MODULE | OR | PACKAGE | PLATFORM
-    | REQUIRES | RETURN | TARGETS | VAR | WHERE | WHILE | WITH | BREAK
 
-header ::= appHeader
-// later: | moduleHeader | packageHeader | platformHeader | hostedHeader
 
-// -- app header ---------------------------------------------
-appHeader     ::= APP provides packages
+// == headers ================================================
+// NOTE: `platform` is intentionally absent — its `requires { ... }` block
+// contains full type annotations, which need a type-annotation grammar we
+// haven't built yet. Its decoded grammar is recorded at the bottom of this
+// file; add `| platformHeader` once `typeAnno` lands.
+header ::= appHeader | moduleHeader | packageHeader | hostedHeader
 
-provides      ::= LBRACK (exposedItem (COMMA exposedItem)*)? RBRACK
-  exposedItem ::= LOWER_IDENT (AS LOWER_IDENT)?
-                | UPPER_IDENT (AS UPPER_IDENT | DOT_STAR)?
+appHeader     ::= KW_APP provides packages
+moduleHeader  ::= KW_MODULE exposes
+packageHeader ::= KW_PACKAGE exposes packages
+hostedHeader  ::= KW_HOSTED exposes
 
-packages      ::= LBRACE (packageEntry (COMMA packageEntry)*)? RBRACE
-packageEntry  ::= LOWER_IDENT OP_COLON PLATFORM? string
+provides ::= exposedList
+exposes  ::= exposedList
+private exposedList ::= LBRACK (exposedItem (COMMA exposedItem)* COMMA?)? RBRACK
 
-// -- strings (worked example — study this) ------------------
+exposedItem ::= LOWER_IDENT (KW_AS LOWER_IDENT)?
+              | UPPER_IDENT (KW_AS UPPER_IDENT | DOT_STAR)?
+
+// The brace-delimited packages block: `{ name: "path", pf: platform "path" }`
+packages     ::= LBRACE (packageEntry (COMMA packageEntry)* COMMA?)? RBRACE
+packageEntry ::= LOWER_IDENT OP_COLON KW_PLATFORM? string
+
 string ::= STRING_START stringElement* STRING_END
 private stringElement ::= STRING_PART | stringInterpolation
 stringInterpolation ::= OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION // M1 stub: no inner expr yet
+
+// == DEFERRED: platform header ==============================
+// Blocked on the type-annotation grammar (parseTypeAnno in the Zig reference,
+// roc-lang/src/parse/Parser.zig). Decoded here so it's ready to wire up:
+//
+//   platformHeader ::= PLATFORM string
+//                      REQUIRES requiresBlock
+//                      EXPOSES  exposedList
+//                      PACKAGES packages
+//                      PROVIDES recordFieldBlock      // '{' field,* '}'
+//                      targetsSection?
+//
+//   requiresBlock ::= LBRACE (requiresEntry (COMMA requiresEntry)* COMMA?)? RBRACE
+//     requiresEntry ::= (LBRACK forClauseAlias (COMMA forClauseAlias)* RBRACK FOR)?
+//                       LOWER_IDENT OP_COLON typeAnno     // <-- needs typeAnno
+//     forClauseAlias ::= UPPER_IDENT OP_COLON LOWER_IDENT
+//     (legacy `requires {} { ... }` empty-rigids form also exists)
+//
+//   targetsSection is optional and non-trivial (see parseTargetsSection).
+//
+// Implement `typeAnno` first (ty_var / ty / apply / fn with -> and => /
+// tuples / records), then this header is straightforward.

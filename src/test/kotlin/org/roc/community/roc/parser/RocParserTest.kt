@@ -13,4 +13,19 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testAppHeaderMinimal() = doTest(true)
+
+    @Test
+    fun testModuleHeader() = doTest(true)
+
+    @Test
+    fun testHostedHeader() = doTest(true)
+
+    @Test
+    fun testPackageHeader() = doTest(true)
+
+    @Test
+    fun testExposedItemVariants() = doTest(true)
+
+    @Test
+    fun testHeaderTrailingComma() = doTest(true)
 }

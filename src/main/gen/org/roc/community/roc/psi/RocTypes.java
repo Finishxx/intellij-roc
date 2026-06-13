@@ -10,50 +10,66 @@ public interface RocTypes {
 
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
+  IElementType EXPOSES = new RocElementType("EXPOSES");
   IElementType HEADER = new RocElementType("HEADER");
+  IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
+  IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
+  IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
   IElementType PROVIDES = new RocElementType("PROVIDES");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
 
-  IElementType AND = new RocTokenType("and");
-  IElementType APP = new RocTokenType("app");
-  IElementType AS = new RocTokenType("as");
-  IElementType BREAK = new RocTokenType("break");
   IElementType CLOSE_STRING_INTERPOLATION = new RocTokenType("CLOSE_STRING_INTERPOLATION");
   IElementType COMMA = new RocTokenType(",");
   IElementType COMMENT = new RocTokenType("COMMENT");
-  IElementType CRASH = new RocTokenType("crash");
-  IElementType DBG = new RocTokenType("dbg");
   IElementType DOT = new RocTokenType(".");
   IElementType DOT_INT = new RocTokenType("DOT_INT");
   IElementType DOT_LOWER_IDENT = new RocTokenType("DOT_LOWER_IDENT");
   IElementType DOT_STAR = new RocTokenType(".*");
   IElementType DOT_UPPER_IDENT = new RocTokenType("DOT_UPPER_IDENT");
   IElementType DOUBLE_DOT = new RocTokenType("..");
-  IElementType ELSE = new RocTokenType("else");
-  IElementType EXPECT = new RocTokenType("expect");
-  IElementType EXPOSES = new RocTokenType("exposes");
-  IElementType EXPOSING = new RocTokenType("exposing");
   IElementType FLOAT = new RocTokenType("FLOAT");
-  IElementType FOR = new RocTokenType("for");
-  IElementType GENERATES = new RocTokenType("generates");
-  IElementType HAS = new RocTokenType("has");
-  IElementType HOSTED = new RocTokenType("hosted");
-  IElementType IF = new RocTokenType("if");
-  IElementType IMPLEMENTS = new RocTokenType("implements");
-  IElementType IMPORT = new RocTokenType("import");
-  IElementType IMPORTS = new RocTokenType("imports");
-  IElementType IN = new RocTokenType("in");
   IElementType INT = new RocTokenType("INT");
-  IElementType INTERFACE = new RocTokenType("interface");
+  IElementType KW_AND = new RocTokenType("and");
+  IElementType KW_APP = new RocTokenType("app");
+  IElementType KW_AS = new RocTokenType("as");
+  IElementType KW_BREAK = new RocTokenType("break");
+  IElementType KW_CRASH = new RocTokenType("crash");
+  IElementType KW_DBG = new RocTokenType("dbg");
+  IElementType KW_ELSE = new RocTokenType("else");
+  IElementType KW_EXPECT = new RocTokenType("expect");
+  IElementType KW_EXPOSES = new RocTokenType("exposes");
+  IElementType KW_EXPOSING = new RocTokenType("exposing");
+  IElementType KW_FOR = new RocTokenType("for");
+  IElementType KW_GENERATES = new RocTokenType("generates");
+  IElementType KW_HAS = new RocTokenType("has");
+  IElementType KW_HOSTED = new RocTokenType("hosted");
+  IElementType KW_IF = new RocTokenType("if");
+  IElementType KW_IMPLEMENTS = new RocTokenType("implements");
+  IElementType KW_IMPORT = new RocTokenType("import");
+  IElementType KW_IMPORTS = new RocTokenType("imports");
+  IElementType KW_IN = new RocTokenType("in");
+  IElementType KW_INTERFACE = new RocTokenType("interface");
+  IElementType KW_MATCH = new RocTokenType("match");
+  IElementType KW_MODULE = new RocTokenType("module");
+  IElementType KW_OR = new RocTokenType("or");
+  IElementType KW_PACKAGE = new RocTokenType("package");
+  IElementType KW_PACKAGES = new RocTokenType("packages");
+  IElementType KW_PLATFORM = new RocTokenType("platform");
+  IElementType KW_PROVIDES = new RocTokenType("provides");
+  IElementType KW_REQUIRES = new RocTokenType("requires");
+  IElementType KW_RETURN = new RocTokenType("return");
+  IElementType KW_TARGETS = new RocTokenType("targets");
+  IElementType KW_VAR = new RocTokenType("var");
+  IElementType KW_WHERE = new RocTokenType("where");
+  IElementType KW_WHILE = new RocTokenType("while");
+  IElementType KW_WITH = new RocTokenType("with");
   IElementType LBRACE = new RocTokenType("{");
   IElementType LBRACK = new RocTokenType("[");
   IElementType LOWER_IDENT = new RocTokenType("LOWER_IDENT");
   IElementType LPAREN = new RocTokenType("(");
-  IElementType MATCH = new RocTokenType("match");
-  IElementType MODULE = new RocTokenType("module");
   IElementType MULTILINE_STRING_START = new RocTokenType("MULTILINE_STRING_START");
   IElementType NAMED_UNDERSCORE = new RocTokenType("NAMED_UNDERSCORE");
   IElementType NO_SPACE_DOT_INT = new RocTokenType("NO_SPACE_DOT_INT");
@@ -91,26 +107,16 @@ public interface RocTypes {
   IElementType OP_SLASH = new RocTokenType("/");
   IElementType OP_STAR = new RocTokenType("*");
   IElementType OP_UNARY_MINUS = new RocTokenType("OP_UNARY_MINUS");
-  IElementType OR = new RocTokenType("or");
-  IElementType PACKAGE = new RocTokenType("package");
-  IElementType PLATFORM = new RocTokenType("platform");
   IElementType RBRACE = new RocTokenType("}");
   IElementType RBRACK = new RocTokenType("]");
-  IElementType REQUIRES = new RocTokenType("requires");
-  IElementType RETURN = new RocTokenType("return");
   IElementType RPAREN = new RocTokenType(")");
   IElementType SINGLE_QUOTE = new RocTokenType("SINGLE_QUOTE");
   IElementType STRING_END = new RocTokenType("STRING_END");
   IElementType STRING_PART = new RocTokenType("STRING_PART");
   IElementType STRING_START = new RocTokenType("STRING_START");
-  IElementType TARGETS = new RocTokenType("targets");
   IElementType TRIPLE_DOT = new RocTokenType("...");
   IElementType UNDERSCORE = new RocTokenType("_");
   IElementType UPPER_IDENT = new RocTokenType("UPPER_IDENT");
-  IElementType VAR = new RocTokenType("var");
-  IElementType WHERE = new RocTokenType("where");
-  IElementType WHILE = new RocTokenType("while");
-  IElementType WITH = new RocTokenType("with");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {
@@ -121,14 +127,26 @@ public interface RocTypes {
       else if (type == EXPOSED_ITEM) {
         return new RocExposedItemImpl(node);
       }
+      else if (type == EXPOSES) {
+        return new RocExposesImpl(node);
+      }
       else if (type == HEADER) {
         return new RocHeaderImpl(node);
+      }
+      else if (type == HOSTED_HEADER) {
+        return new RocHostedHeaderImpl(node);
+      }
+      else if (type == MODULE_HEADER) {
+        return new RocModuleHeaderImpl(node);
       }
       else if (type == PACKAGES) {
         return new RocPackagesImpl(node);
       }
       else if (type == PACKAGE_ENTRY) {
         return new RocPackageEntryImpl(node);
+      }
+      else if (type == PACKAGE_HEADER) {
+        return new RocPackageHeaderImpl(node);
       }
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);

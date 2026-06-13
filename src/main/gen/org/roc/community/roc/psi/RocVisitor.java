@@ -15,11 +15,27 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitExposes(@NotNull RocExposes o) {
+    visitPsiElement(o);
+  }
+
   public void visitHeader(@NotNull RocHeader o) {
     visitPsiElement(o);
   }
 
+  public void visitHostedHeader(@NotNull RocHostedHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitModuleHeader(@NotNull RocModuleHeader o) {
+    visitPsiElement(o);
+  }
+
   public void visitPackageEntry(@NotNull RocPackageEntry o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPackageHeader(@NotNull RocPackageHeader o) {
     visitPsiElement(o);
   }
 

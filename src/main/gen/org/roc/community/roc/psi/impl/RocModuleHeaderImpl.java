@@ -11,14 +11,14 @@ import static org.roc.community.roc.psi.RocTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.roc.community.roc.psi.*;
 
-public class RocHeaderImpl extends ASTWrapperPsiElement implements RocHeader {
+public class RocModuleHeaderImpl extends ASTWrapperPsiElement implements RocModuleHeader {
 
-  public RocHeaderImpl(@NotNull ASTNode node) {
+  public RocModuleHeaderImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RocVisitor visitor) {
-    visitor.visitHeader(this);
+    visitor.visitModuleHeader(this);
   }
 
   @Override
@@ -28,27 +28,9 @@ public class RocHeaderImpl extends ASTWrapperPsiElement implements RocHeader {
   }
 
   @Override
-  @Nullable
-  public RocAppHeader getAppHeader() {
-    return findChildByClass(RocAppHeader.class);
-  }
-
-  @Override
-  @Nullable
-  public RocHostedHeader getHostedHeader() {
-    return findChildByClass(RocHostedHeader.class);
-  }
-
-  @Override
-  @Nullable
-  public RocModuleHeader getModuleHeader() {
-    return findChildByClass(RocModuleHeader.class);
-  }
-
-  @Override
-  @Nullable
-  public RocPackageHeader getPackageHeader() {
-    return findChildByClass(RocPackageHeader.class);
+  @NotNull
+  public RocExposes getExposes() {
+    return findNotNullChildByClass(RocExposes.class);
   }
 
 }

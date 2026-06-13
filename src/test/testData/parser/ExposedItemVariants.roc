@@ -1,0 +1,1 @@
+module [foo as bar, Baz.*, Qux as Quux]
