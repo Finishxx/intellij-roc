@@ -1,0 +1,37 @@
+package org.roc.community.roc.parser
+
+import com.intellij.lang.ASTNode
+import com.intellij.lang.ParserDefinition
+import com.intellij.lang.PsiParser
+import com.intellij.lexer.Lexer
+import com.intellij.openapi.project.Project
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.TokenSet
+import org.roc.community.roc.RocFile
+import org.roc.community.roc.RocLanguage
+import org.roc.community.roc.lexer.RocLexerAdapter
+import org.roc.community.roc.psi.RocTypes
+
+class RocParserDefinition: ParserDefinition {
+
+    companion object {
+        val FILE = IFileElementType(RocLanguage)
+    }
+
+    override fun createLexer(project: Project?): Lexer = RocLexerAdapter()
+
+    override fun createParser(project: Project?): PsiParser  = RocParser()
+
+    override fun getFileNodeType(): IFileElementType = FILE
+
+    override fun getCommentTokens(): TokenSet = RocTokenSets.COMMENTS
+
+    override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
+
+    override fun createElement(node: ASTNode?): PsiElement = RocTypes.Factory.createElement(node)
+
+    override fun createFile(viewProvider: FileViewProvider): PsiFile = RocFile(viewProvider)
+}

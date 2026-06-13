@@ -16,9 +16,9 @@ import static org.roc.community.roc.psi.RocTypes.*;
 %{
   // --- Whitespace-sensitivity & previous-token tracking (mirrors tokenize.zig sawWhitespace / lastTokenTag) ---
   // True if the token we are about to read was immediately preceded by whitespace,
-  // a comment, a newline, or the start of file. Drives NO_SPACE_* and unary/binary minus.
+  // a comment, a newline, or the start of file
   private boolean sawSpace = true;
-  // The last *real* (non-trivia) token returned. Used by prevCanEndExpr() for minus.
+  // The last *real* (non-trivia) token returned
   private IElementType lastToken = null;
 
   // --- String-interpolation stack (mirrors tokenize.zig string_interpolation_stack, plus Kotlin-style brace depth) ---

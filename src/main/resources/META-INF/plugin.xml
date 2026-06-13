@@ -15,7 +15,9 @@
     <resource-bundle>messages.RocMessageBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="Roc file" implementationClass="org.roc.community.roc.RocFileType" language="Roc" extensions="roc"/>
+        <fileType name="Roc file" implementationClass="org.roc.community.roc.RocFileType" fieldName="INSTANCE" language="Roc"
+                  extensions="roc"/>
+        <lang.parserDefinition language="Roc" implementationClass="org.roc.community.roc.parser.RocParserDefinition"/>
     </extensions>
 
 </idea-plugin>

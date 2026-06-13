@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-class RocFileType : LanguageFileType(RocLanguage) {
+object RocFileType : LanguageFileType(RocLanguage) {
     override fun getName(): @NonNls String = "Roc"
 
     override fun getDescription(): @NlsContexts.Label String = RocMessageBundle.message("roc.filetype.description")
