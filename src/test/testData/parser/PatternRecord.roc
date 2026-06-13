@@ -1,0 +1,1 @@
+{ name, id: userId } = person

@@ -1,0 +1,1 @@
+Pair(x, y) = point

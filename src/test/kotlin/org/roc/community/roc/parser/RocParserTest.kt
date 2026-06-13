@@ -77,4 +77,36 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testImportFile() = doTest(true)
+
+    // -- patterns (M3, hosted by a TEMP destructuring decl; see Roc.bnf) --
+
+    @Test
+    fun testPatternIdent() = doTest(true)
+
+    @Test
+    fun testPatternVar() = doTest(true)
+
+    @Test
+    fun testPatternUnderscore() = doTest(true)
+
+    @Test
+    fun testPatternTag() = doTest(true)
+
+    @Test
+    fun testPatternTuple() = doTest(true)
+
+    @Test
+    fun testPatternRecord() = doTest(true)
+
+    @Test
+    fun testPatternRecordRest() = doTest(true)
+
+    @Test
+    fun testPatternList() = doTest(true)
+
+    @Test
+    fun testPatternAs() = doTest(true)
+
+    @Test
+    fun testPatternAlternatives() = doTest(true)
 }

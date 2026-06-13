@@ -133,7 +133,7 @@ root ::= header? topLevelItem*
 // statements cover them (then convert the type tests to `name : Type`).
 private topLevelItem ::= statement | typeAnno | throwaway
 
-private statement ::= importStatement
+private statement ::= importStatement | valueDecl
 private throwaway ::=
       LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
     | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
@@ -195,6 +195,57 @@ importExposing ::= KW_EXPOSING exposedList        // reuses the header's exposed
 // `import "path" as name : <type>`. Roc restricts the type to Str / List(U8),
 // but that's a semantic check; syntactically any typeAnno is accepted here.
 private fileImport ::= string KW_AS LOWER_IDENT OP_COLON typeAnno
+
+// == declarations (TEMP pattern harness) ====================
+// Patterns aren't a top-level construct, so a destructuring value decl hosts them
+// for testing. `exprStub` is atoms-only scaffolding until M4 (expressions) lands a
+// real `expr`; at that point this becomes the genuine value/destructure decl.
+valueDecl ::= patternNoAlts OP_ASSIGN exprStub
+private exprStub ::= INT | FLOAT | LOWER_IDENT | UPPER_IDENT | string
+
+// == patterns ===============================================
+private pattern       ::= alternativesPattern | asPattern | patternPrimary
+private patternNoAlts ::= asPattern | patternPrimary
+
+// `a | b | c`
+alternativesPattern ::= patternPrimary (OP_BAR patternPrimary)+
+// postfix `p as name` — only a node when `as` is present.
+asPattern ::= patternPrimary KW_AS LOWER_IDENT
+
+// All first-sets are disjoint, so ordering is irrelevant and there is no
+// intra-primary backtracking.
+private patternPrimary ::= varPattern
+                         | underscorePattern
+                         | identPattern
+                         | tagPattern
+                         | literalPattern
+                         | string
+                         | listPattern
+                         | recordPattern
+                         | tuplePattern
+
+identPattern      ::= LOWER_IDENT | NAMED_UNDERSCORE   // both are `.ident` in Roc
+varPattern        ::= KW_VAR LOWER_IDENT               // mutable binder `var x`
+underscorePattern ::= UNDERSCORE                       // `_`
+literalPattern    ::= INT | FLOAT | SINGLE_QUOTE       // string literal reuses `string`
+
+// `Ok`, `Json.Ok`, `Pair(x, y)`. Qualifier chain = lexer dotted-upper tokens
+tagPattern     ::= UPPER_IDENT NO_SPACE_DOT_UPPER_IDENT* tagPatternArgs?
+tagPatternArgs ::= NO_SPACE_LPAREN (pattern (COMMA pattern)* COMMA?)? RPAREN
+
+// `[a, b]`, `[1, 2, .. as rest]`, `[..]`. List rest is `.. as name` (new syntax).
+listPattern             ::= LBRACK (listPatternElem (COMMA listPatternElem)* COMMA?)? RBRACK
+private listPatternElem ::= listRestPattern | pattern
+listRestPattern         ::= DOUBLE_DOT (KW_AS LOWER_IDENT)?
+
+// `{ name, age }`, `{ name: n }`, `{ x, ..rest }`. NB record rest is `..name`
+// directly (no `as`), unlike list rest.
+recordPattern      ::= LBRACE (recordPatternField (COMMA recordPatternField)* COMMA?)? RBRACE
+recordPatternField ::= DOUBLE_DOT LOWER_IDENT?
+                     | LOWER_IDENT (OP_COLON pattern)?
+
+// `(a, b)`, `(a)`. A standalone '(' may be spaced or no-space.
+tuplePattern ::= (NO_SPACE_LPAREN | LPAREN) (pattern (COMMA pattern)* COMMA?)? RPAREN
 
 // == type annotations =======================================
 // Faithful to parseTypeAnno in the Zig reference (roc-lang/src/parse/Parser.zig).

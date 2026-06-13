@@ -8,34 +8,48 @@ import org.roc.community.roc.psi.impl.*;
 
 public interface RocTypes {
 
+  IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
+  IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
   IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
   IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
+  IElementType IDENT_PATTERN = new RocElementType("IDENT_PATTERN");
   IElementType IMPORT_ALIAS = new RocElementType("IMPORT_ALIAS");
   IElementType IMPORT_EXPOSING = new RocElementType("IMPORT_EXPOSING");
   IElementType IMPORT_STATEMENT = new RocElementType("IMPORT_STATEMENT");
   IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
   IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
+  IElementType LIST_PATTERN = new RocElementType("LIST_PATTERN");
+  IElementType LIST_REST_PATTERN = new RocElementType("LIST_REST_PATTERN");
+  IElementType LITERAL_PATTERN = new RocElementType("LITERAL_PATTERN");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType MODULE_NAME = new RocElementType("MODULE_NAME");
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
   IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
   IElementType PROVIDES = new RocElementType("PROVIDES");
+  IElementType RECORD_PATTERN = new RocElementType("RECORD_PATTERN");
+  IElementType RECORD_PATTERN_FIELD = new RocElementType("RECORD_PATTERN_FIELD");
   IElementType RECORD_TYPE = new RocElementType("RECORD_TYPE");
   IElementType RECORD_TYPE_EXT = new RocElementType("RECORD_TYPE_EXT");
   IElementType RECORD_TYPE_FIELD = new RocElementType("RECORD_TYPE_FIELD");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
+  IElementType TAG_PATTERN = new RocElementType("TAG_PATTERN");
+  IElementType TAG_PATTERN_ARGS = new RocElementType("TAG_PATTERN_ARGS");
   IElementType TAG_UNION_EXT = new RocElementType("TAG_UNION_EXT");
   IElementType TAG_UNION_MEMBER = new RocElementType("TAG_UNION_MEMBER");
   IElementType TAG_UNION_TYPE = new RocElementType("TAG_UNION_TYPE");
+  IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
   IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
   IElementType TYPE_REFERENCE = new RocElementType("TYPE_REFERENCE");
+  IElementType UNDERSCORE_PATTERN = new RocElementType("UNDERSCORE_PATTERN");
+  IElementType VALUE_DECL = new RocElementType("VALUE_DECL");
+  IElementType VAR_PATTERN = new RocElementType("VAR_PATTERN");
 
   IElementType CLOSE_STRING_INTERPOLATION = new RocTokenType("CLOSE_STRING_INTERPOLATION");
   IElementType COMMA = new RocTokenType(",");
@@ -137,8 +151,14 @@ public interface RocTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == APP_HEADER) {
+      if (type == ALTERNATIVES_PATTERN) {
+        return new RocAlternativesPatternImpl(node);
+      }
+      else if (type == APP_HEADER) {
         return new RocAppHeaderImpl(node);
+      }
+      else if (type == AS_PATTERN) {
+        return new RocAsPatternImpl(node);
       }
       else if (type == EXPOSED_ITEM) {
         return new RocExposedItemImpl(node);
@@ -155,6 +175,9 @@ public interface RocTypes {
       else if (type == HOSTED_HEADER) {
         return new RocHostedHeaderImpl(node);
       }
+      else if (type == IDENT_PATTERN) {
+        return new RocIdentPatternImpl(node);
+      }
       else if (type == IMPORT_ALIAS) {
         return new RocImportAliasImpl(node);
       }
@@ -169,6 +192,15 @@ public interface RocTypes {
       }
       else if (type == INFERRED_TYPE_VAR) {
         return new RocInferredTypeVarImpl(node);
+      }
+      else if (type == LIST_PATTERN) {
+        return new RocListPatternImpl(node);
+      }
+      else if (type == LIST_REST_PATTERN) {
+        return new RocListRestPatternImpl(node);
+      }
+      else if (type == LITERAL_PATTERN) {
+        return new RocLiteralPatternImpl(node);
       }
       else if (type == MODULE_HEADER) {
         return new RocModuleHeaderImpl(node);
@@ -188,6 +220,12 @@ public interface RocTypes {
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);
       }
+      else if (type == RECORD_PATTERN) {
+        return new RocRecordPatternImpl(node);
+      }
+      else if (type == RECORD_PATTERN_FIELD) {
+        return new RocRecordPatternFieldImpl(node);
+      }
       else if (type == RECORD_TYPE) {
         return new RocRecordTypeImpl(node);
       }
@@ -203,6 +241,12 @@ public interface RocTypes {
       else if (type == STRING_INTERPOLATION) {
         return new RocStringInterpolationImpl(node);
       }
+      else if (type == TAG_PATTERN) {
+        return new RocTagPatternImpl(node);
+      }
+      else if (type == TAG_PATTERN_ARGS) {
+        return new RocTagPatternArgsImpl(node);
+      }
       else if (type == TAG_UNION_EXT) {
         return new RocTagUnionExtImpl(node);
       }
@@ -212,6 +256,9 @@ public interface RocTypes {
       else if (type == TAG_UNION_TYPE) {
         return new RocTagUnionTypeImpl(node);
       }
+      else if (type == TUPLE_PATTERN) {
+        return new RocTuplePatternImpl(node);
+      }
       else if (type == TUPLE_TYPE) {
         return new RocTupleTypeImpl(node);
       }
@@ -220,6 +267,15 @@ public interface RocTypes {
       }
       else if (type == TYPE_REFERENCE) {
         return new RocTypeReferenceImpl(node);
+      }
+      else if (type == UNDERSCORE_PATTERN) {
+        return new RocUnderscorePatternImpl(node);
+      }
+      else if (type == VALUE_DECL) {
+        return new RocValueDeclImpl(node);
+      }
+      else if (type == VAR_PATTERN) {
+        return new RocVarPatternImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

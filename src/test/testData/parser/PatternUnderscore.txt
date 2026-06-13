@@ -1,0 +1,8 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocUnderscorePatternImpl(UNDERSCORE_PATTERN)
+      PsiElement(_)('_')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    PsiElement(LOWER_IDENT)('ignored')

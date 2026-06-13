@@ -1,0 +1,10 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocVarPatternImpl(VAR_PATTERN)
+      PsiElement(var)('var')
+      PsiWhiteSpace(' ')
+      PsiElement(LOWER_IDENT)('counter')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    PsiElement(INT)('0')

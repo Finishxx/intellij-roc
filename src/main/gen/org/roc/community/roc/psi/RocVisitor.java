@@ -7,7 +7,15 @@ import com.intellij.psi.PsiElement;
 
 public class RocVisitor extends PsiElementVisitor {
 
+  public void visitAlternativesPattern(@NotNull RocAlternativesPattern o) {
+    visitPsiElement(o);
+  }
+
   public void visitAppHeader(@NotNull RocAppHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitAsPattern(@NotNull RocAsPattern o) {
     visitPsiElement(o);
   }
 
@@ -31,6 +39,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitIdentPattern(@NotNull RocIdentPattern o) {
+    visitPsiElement(o);
+  }
+
   public void visitImportAlias(@NotNull RocImportAlias o) {
     visitPsiElement(o);
   }
@@ -48,6 +60,18 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitInferredTypeVar(@NotNull RocInferredTypeVar o) {
+    visitPsiElement(o);
+  }
+
+  public void visitListPattern(@NotNull RocListPattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitListRestPattern(@NotNull RocListRestPattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitLiteralPattern(@NotNull RocLiteralPattern o) {
     visitPsiElement(o);
   }
 
@@ -75,6 +99,14 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitRecordPattern(@NotNull RocRecordPattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitRecordPatternField(@NotNull RocRecordPatternField o) {
+    visitPsiElement(o);
+  }
+
   public void visitRecordType(@NotNull RocRecordType o) {
     visitPsiElement(o);
   }
@@ -95,6 +127,14 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitTagPattern(@NotNull RocTagPattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitTagPatternArgs(@NotNull RocTagPatternArgs o) {
+    visitPsiElement(o);
+  }
+
   public void visitTagUnionExt(@NotNull RocTagUnionExt o) {
     visitPsiElement(o);
   }
@@ -107,6 +147,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitTuplePattern(@NotNull RocTuplePattern o) {
+    visitPsiElement(o);
+  }
+
   public void visitTupleType(@NotNull RocTupleType o) {
     visitPsiElement(o);
   }
@@ -116,6 +160,18 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitTypeReference(@NotNull RocTypeReference o) {
+    visitPsiElement(o);
+  }
+
+  public void visitUnderscorePattern(@NotNull RocUnderscorePattern o) {
+    visitPsiElement(o);
+  }
+
+  public void visitValueDecl(@NotNull RocValueDecl o) {
+    visitPsiElement(o);
+  }
+
+  public void visitVarPattern(@NotNull RocVarPattern o) {
     visitPsiElement(o);
   }
 
