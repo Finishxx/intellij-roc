@@ -1,0 +1,12 @@
+FILE
+  RocImportStatementImpl(IMPORT_STATEMENT)
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    RocModuleNameImpl(MODULE_NAME)
+      PsiElement(LOWER_IDENT)('pf')
+      PsiElement(NO_SPACE_DOT_UPPER_IDENT)('.Stdout')
+    PsiWhiteSpace(' ')
+    RocImportAliasImpl(IMPORT_ALIAS)
+      PsiElement(as)('as')
+      PsiWhiteSpace(' ')
+      PsiElement(UPPER_IDENT)('Out')

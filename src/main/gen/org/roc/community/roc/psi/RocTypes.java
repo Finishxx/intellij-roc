@@ -14,9 +14,13 @@ public interface RocTypes {
   IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
   IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
+  IElementType IMPORT_ALIAS = new RocElementType("IMPORT_ALIAS");
+  IElementType IMPORT_EXPOSING = new RocElementType("IMPORT_EXPOSING");
+  IElementType IMPORT_STATEMENT = new RocElementType("IMPORT_STATEMENT");
   IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
   IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
+  IElementType MODULE_NAME = new RocElementType("MODULE_NAME");
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
   IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
@@ -151,6 +155,15 @@ public interface RocTypes {
       else if (type == HOSTED_HEADER) {
         return new RocHostedHeaderImpl(node);
       }
+      else if (type == IMPORT_ALIAS) {
+        return new RocImportAliasImpl(node);
+      }
+      else if (type == IMPORT_EXPOSING) {
+        return new RocImportExposingImpl(node);
+      }
+      else if (type == IMPORT_STATEMENT) {
+        return new RocImportStatementImpl(node);
+      }
       else if (type == INFERRED_TYPE) {
         return new RocInferredTypeImpl(node);
       }
@@ -159,6 +172,9 @@ public interface RocTypes {
       }
       else if (type == MODULE_HEADER) {
         return new RocModuleHeaderImpl(node);
+      }
+      else if (type == MODULE_NAME) {
+        return new RocModuleNameImpl(node);
       }
       else if (type == PACKAGES) {
         return new RocPackagesImpl(node);

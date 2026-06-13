@@ -1,3 +1,5 @@
+// Ideas:
+//  - Make a Identifier superclass for LOWER_IDENT, NO_SPACE_DOT_UPPER_IDENT etc.
 {
   parserClass = "org.roc.community.roc.parser.RocParser"
   elementTypeHolderClass = "org.roc.community.roc.psi.RocTypes"
@@ -122,10 +124,16 @@
 
 }
 
-// TEMP (types milestone): `typeAnno` is exposed at the root so we can golden-test
-// bare type annotations before the statement loop / `type_anno` statements exist.
-// Drop the `typeAnno` alternative once statements land.
-root ::= header | typeAnno | throwaway
+// A Roc file is an optional header followed by top-level items.
+root ::= header? topLevelItem*
+
+// TEMP: `typeAnno` rides along as a top-level item so the type goldens keep
+// passing until `type_anno`/`type_decl` statements exist; `throwaway` is the
+// last-resort token mop-up from lexer bring-up. Drop both arms once real
+// statements cover them (then convert the type tests to `name : Type`).
+private topLevelItem ::= statement | typeAnno | throwaway
+
+private statement ::= importStatement
 private throwaway ::=
       LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
     | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
@@ -170,6 +178,23 @@ packageEntry ::= LOWER_IDENT OP_COLON KW_PLATFORM? string
 string ::= STRING_START stringElement* STRING_END
 private stringElement ::= STRING_PART | stringInterpolation
 stringInterpolation ::= OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION // M1 stub: no inner expr yet
+
+// == imports ================================================
+// Two forms, dispatched on the token after `import`:
+//   module import:  import pf.Stdout | import Json.Core | import json.Json.Utf8
+//                          ... as Out | ... exposing [line!, write]
+//   file import:    import "data.txt" as data : Str
+importStatement ::= KW_IMPORT (fileImport | moduleImport)
+
+private moduleImport ::= moduleName importAlias? importExposing?
+moduleName ::= UPPER_IDENT  (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)*
+             | LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)+
+importAlias    ::= KW_AS UPPER_IDENT
+importExposing ::= KW_EXPOSING exposedList        // reuses the header's exposedList
+
+// `import "path" as name : <type>`. Roc restricts the type to Str / List(U8),
+// but that's a semantic check; syntactically any typeAnno is accepted here.
+private fileImport ::= string KW_AS LOWER_IDENT OP_COLON typeAnno
 
 // == type annotations =======================================
 // Faithful to parseTypeAnno in the Zig reference (roc-lang/src/parse/Parser.zig).

@@ -195,6 +195,20 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // string KW_AS LOWER_IDENT OP_COLON typeAnno
+  static boolean fileImport(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fileImport")) return false;
+    if (!nextTokenIs(b, STRING_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = string(b, l + 1);
+    r = r && consumeTokens(b, 0, KW_AS, LOWER_IDENT, OP_COLON);
+    r = r && typeAnno(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // typeFnArgs (OP_ARROW | OP_FAT_ARROW) typeAnno
   public static boolean functionType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "functionType")) return false;
@@ -244,6 +258,53 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // KW_AS UPPER_IDENT
+  public static boolean importAlias(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importAlias")) return false;
+    if (!nextTokenIs(b, KW_AS)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, KW_AS, UPPER_IDENT);
+    exit_section_(b, m, IMPORT_ALIAS, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // KW_EXPOSING exposedList
+  public static boolean importExposing(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importExposing")) return false;
+    if (!nextTokenIs(b, KW_EXPOSING)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_EXPOSING);
+    r = r && exposedList(b, l + 1);
+    exit_section_(b, m, IMPORT_EXPOSING, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // KW_IMPORT (fileImport | moduleImport)
+  public static boolean importStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatement")) return false;
+    if (!nextTokenIs(b, KW_IMPORT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_IMPORT);
+    r = r && importStatement_1(b, l + 1);
+    exit_section_(b, m, IMPORT_STATEMENT, r);
+    return r;
+  }
+
+  // fileImport | moduleImport
+  private static boolean importStatement_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatement_1")) return false;
+    boolean r;
+    r = fileImport(b, l + 1);
+    if (!r) r = moduleImport(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
   // UNDERSCORE
   public static boolean inferredType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inferredType")) return false;
@@ -277,6 +338,114 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, KW_MODULE);
     r = r && exposes(b, l + 1);
     exit_section_(b, m, MODULE_HEADER, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // moduleName importAlias? importExposing?
+  static boolean moduleImport(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleImport")) return false;
+    if (!nextTokenIs(b, "", LOWER_IDENT, UPPER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = moduleName(b, l + 1);
+    r = r && moduleImport_1(b, l + 1);
+    r = r && moduleImport_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // importAlias?
+  private static boolean moduleImport_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleImport_1")) return false;
+    importAlias(b, l + 1);
+    return true;
+  }
+
+  // importExposing?
+  private static boolean moduleImport_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleImport_2")) return false;
+    importExposing(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // UPPER_IDENT  (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)*
+  //              | LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)+
+  public static boolean moduleName(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName")) return false;
+    if (!nextTokenIs(b, "<module name>", LOWER_IDENT, UPPER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, MODULE_NAME, "<module name>");
+    r = moduleName_0(b, l + 1);
+    if (!r) r = moduleName_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // UPPER_IDENT  (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)*
+  private static boolean moduleName_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, UPPER_IDENT);
+    r = r && moduleName_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)*
+  private static boolean moduleName_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!moduleName_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "moduleName_0_1", c)) break;
+    }
+    return true;
+  }
+
+  // NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT
+  private static boolean moduleName_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_0_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, NO_SPACE_DOT_UPPER_IDENT);
+    if (!r) r = consumeToken(b, DOT_UPPER_IDENT);
+    return r;
+  }
+
+  // LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)+
+  private static boolean moduleName_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LOWER_IDENT);
+    r = r && moduleName_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)+
+  private static boolean moduleName_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = moduleName_1_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!moduleName_1_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "moduleName_1_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT
+  private static boolean moduleName_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "moduleName_1_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, NO_SPACE_DOT_UPPER_IDENT);
+    if (!r) r = consumeToken(b, DOT_UPPER_IDENT);
     return r;
   }
 
@@ -557,14 +726,39 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // header | typeAnno | throwaway
+  // header? topLevelItem*
   static boolean root(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root")) return false;
     boolean r;
-    r = header(b, l + 1);
-    if (!r) r = typeAnno(b, l + 1);
-    if (!r) r = throwaway(b, l + 1);
+    Marker m = enter_section_(b);
+    r = root_0(b, l + 1);
+    r = r && root_1(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
+  }
+
+  // header?
+  private static boolean root_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "root_0")) return false;
+    header(b, l + 1);
+    return true;
+  }
+
+  // topLevelItem*
+  private static boolean root_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "root_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!topLevelItem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "root_1", c)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // importStatement
+  static boolean statement(PsiBuilder b, int l) {
+    return importStatement(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -840,6 +1034,17 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, OPEN_STRING_INTERPOLATION);
     if (!r) r = consumeToken(b, CLOSE_STRING_INTERPOLATION);
     if (!r) r = consumeToken(b, COMMENT);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // statement | typeAnno | throwaway
+  static boolean topLevelItem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "topLevelItem")) return false;
+    boolean r;
+    r = statement(b, l + 1);
+    if (!r) r = typeAnno(b, l + 1);
+    if (!r) r = throwaway(b, l + 1);
     return r;
   }
 

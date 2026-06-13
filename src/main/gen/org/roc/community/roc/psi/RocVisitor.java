@@ -31,6 +31,18 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitImportAlias(@NotNull RocImportAlias o) {
+    visitPsiElement(o);
+  }
+
+  public void visitImportExposing(@NotNull RocImportExposing o) {
+    visitPsiElement(o);
+  }
+
+  public void visitImportStatement(@NotNull RocImportStatement o) {
+    visitPsiElement(o);
+  }
+
   public void visitInferredType(@NotNull RocInferredType o) {
     visitPsiElement(o);
   }
@@ -40,6 +52,10 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitModuleHeader(@NotNull RocModuleHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitModuleName(@NotNull RocModuleName o) {
     visitPsiElement(o);
   }
 

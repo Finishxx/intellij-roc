@@ -60,4 +60,21 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testTypeInferred() = doTest(true)
+
+    // -- imports (M2) --
+
+    @Test
+    fun testImportSimple() = doTest(true)
+
+    @Test
+    fun testImportQualified() = doTest(true)
+
+    @Test
+    fun testImportAlias() = doTest(true)
+
+    @Test
+    fun testImportExposing() = doTest(true)
+
+    @Test
+    fun testImportFile() = doTest(true)
 }
