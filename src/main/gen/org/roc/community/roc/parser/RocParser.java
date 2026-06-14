@@ -36,10 +36,11 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
-    create_token_set_(CALL_EXPR, CHAR_LITERAL, EXPR, FIELD_ACCESS_EXPR,
-      FLOAT_LITERAL, IDENT_EXPR, INT_LITERAL, LIST_EXPR,
-      METHOD_CALL_EXPR, QUALIFIED_NAME_EXPR, RECORD_EXPR, STRING,
-      TAG_EXPR, TUPLE_ACCESS_EXPR, TUPLE_EXPR),
+    create_token_set_(BINARY_EXPR, CALL_EXPR, CHAR_LITERAL, ELLIPSIS_EXPR,
+      EXPR, FIELD_ACCESS_EXPR, FLOAT_LITERAL, IDENT_EXPR,
+      INT_LITERAL, LIST_EXPR, METHOD_CALL_EXPR, QUALIFIED_NAME_EXPR,
+      QUESTION_SUFFIX_EXPR, RECORD_EXPR, STRING, TAG_EXPR,
+      TUPLE_ACCESS_EXPR, TUPLE_EXPR, UNARY_EXPR),
   };
 
   /* ********************************************************** */
@@ -103,6 +104,33 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = patternPrimary(b, l + 1);
     r = r && consumeTokens(b, 0, KW_AS, LOWER_IDENT);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // OP_STAR | OP_SLASH | OP_DOUBLE_SLASH | OP_PERCENT | OP_PLUS
+  //                    | OP_BINARY_MINUS | OP_DOUBLE_QUESTION | OP_QUESTION | OP_EQUALS
+  //                    | OP_NOT_EQUALS | OP_LESS_THAN | OP_GREATER_THAN | OP_LESS_THAN_OR_EQ
+  //                    | OP_GREATER_THAN_OR_EQ | KW_AND | KW_OR
+  static boolean binaryOp(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "binaryOp")) return false;
+    boolean r;
+    r = consumeToken(b, OP_STAR);
+    if (!r) r = consumeToken(b, OP_SLASH);
+    if (!r) r = consumeToken(b, OP_DOUBLE_SLASH);
+    if (!r) r = consumeToken(b, OP_PERCENT);
+    if (!r) r = consumeToken(b, OP_PLUS);
+    if (!r) r = consumeToken(b, OP_BINARY_MINUS);
+    if (!r) r = consumeToken(b, OP_DOUBLE_QUESTION);
+    if (!r) r = consumeToken(b, OP_QUESTION);
+    if (!r) r = consumeToken(b, OP_EQUALS);
+    if (!r) r = consumeToken(b, OP_NOT_EQUALS);
+    if (!r) r = consumeToken(b, OP_LESS_THAN);
+    if (!r) r = consumeToken(b, OP_GREATER_THAN);
+    if (!r) r = consumeToken(b, OP_LESS_THAN_OR_EQ);
+    if (!r) r = consumeToken(b, OP_GREATER_THAN_OR_EQ);
+    if (!r) r = consumeToken(b, KW_AND);
+    if (!r) r = consumeToken(b, KW_OR);
     return r;
   }
 
@@ -2832,32 +2860,47 @@ public class RocParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // Expression root: expr
   // Operator priority table:
-  // 0: POSTFIX(callExpr)
-  // 1: POSTFIX(methodCallExpr)
-  // 2: POSTFIX(fieldAccessExpr)
-  // 3: POSTFIX(tupleAccessExpr)
-  // 4: ATOM(intLiteral)
-  // 5: ATOM(floatLiteral)
-  // 6: ATOM(charLiteral)
-  // 7: ATOM(string)
-  // 8: ATOM(qualifiedNameExpr)
-  // 9: ATOM(tagExpr)
-  // 10: ATOM(identExpr)
-  // 11: ATOM(listExpr)
-  // 12: ATOM(tupleExpr)
-  // 13: ATOM(recordExpr)
+  // 0: BINARY(orExpr)
+  // 1: BINARY(andExpr)
+  // 2: BINARY(comparisonExpr)
+  // 3: BINARY(binQuestionExpr)
+  // 4: BINARY(coalesceExpr)
+  // 5: BINARY(addExpr)
+  // 6: BINARY(modExpr)
+  // 7: BINARY(intDivExpr)
+  // 8: BINARY(divExpr)
+  // 9: BINARY(mulExpr)
+  // 10: PREFIX(unaryExpr)
+  // 11: POSTFIX(callExpr)
+  // 12: POSTFIX(methodCallExpr)
+  // 13: POSTFIX(fieldAccessExpr)
+  // 14: POSTFIX(tupleAccessExpr)
+  // 15: POSTFIX(questionSuffixExpr)
+  // 16: ATOM(intLiteral)
+  // 17: ATOM(floatLiteral)
+  // 18: ATOM(charLiteral)
+  // 19: ATOM(string)
+  // 20: ATOM(qualifiedNameExpr)
+  // 21: ATOM(tagExpr)
+  // 22: ATOM(identExpr)
+  // 23: ATOM(ellipsisExpr)
+  // 24: ATOM(listExpr)
+  // 25: ATOM(tupleExpr)
+  // 26: ATOM(recordExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, "<expr>");
-    r = intLiteral(b, l + 1);
+    r = unaryExpr(b, l + 1);
+    if (!r) r = intLiteral(b, l + 1);
     if (!r) r = floatLiteral(b, l + 1);
     if (!r) r = charLiteral(b, l + 1);
     if (!r) r = string(b, l + 1);
     if (!r) r = qualifiedNameExpr(b, l + 1);
     if (!r) r = tagExpr(b, l + 1);
     if (!r) r = identExpr(b, l + 1);
+    if (!r) r = ellipsisExpr(b, l + 1);
     if (!r) r = listExpr(b, l + 1);
     if (!r) r = tupleExpr(b, l + 1);
     if (!r) r = recordExpr(b, l + 1);
@@ -2872,27 +2915,115 @@ public class RocParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 0 && callArgs(b, l + 1)) {
+      if (g < 0 && consumeTokenSmart(b, KW_OR)) {
+        r = expr(b, l, -1);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 1 && consumeTokenSmart(b, KW_AND)) {
+        r = expr(b, l, 0);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 2 && comparisonExpr_0(b, l + 1)) {
+        r = expr(b, l, 2);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 3 && consumeTokenSmart(b, OP_QUESTION)) {
+        r = expr(b, l, 3);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 4 && consumeTokenSmart(b, OP_DOUBLE_QUESTION)) {
+        r = expr(b, l, 4);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 5 && addExpr_0(b, l + 1)) {
+        r = expr(b, l, 5);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, OP_PERCENT)) {
+        r = expr(b, l, 6);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, OP_DOUBLE_SLASH)) {
+        r = expr(b, l, 7);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, OP_SLASH)) {
+        r = expr(b, l, 8);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 9 && consumeTokenSmart(b, OP_STAR)) {
+        r = expr(b, l, 9);
+        exit_section_(b, l, m, BINARY_EXPR, r, true, null);
+      }
+      else if (g < 11 && callArgs(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, CALL_EXPR, r, true, null);
       }
-      else if (g < 1 && methodCallExpr_0(b, l + 1)) {
+      else if (g < 12 && methodCallExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, METHOD_CALL_EXPR, r, true, null);
       }
-      else if (g < 2 && fieldAccessExpr_0(b, l + 1)) {
+      else if (g < 13 && fieldAccessExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, FIELD_ACCESS_EXPR, r, true, null);
       }
-      else if (g < 3 && tupleAccessExpr_0(b, l + 1)) {
+      else if (g < 14 && tupleAccessExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, TUPLE_ACCESS_EXPR, r, true, null);
+      }
+      else if (g < 15 && consumeTokenSmart(b, NO_SPACE_OP_QUESTION)) {
+        r = true;
+        exit_section_(b, l, m, QUESTION_SUFFIX_EXPR, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
         break;
       }
     }
+    return r;
+  }
+
+  // OP_EQUALS | OP_NOT_EQUALS | OP_LESS_THAN | OP_GREATER_THAN
+  //                           | OP_LESS_THAN_OR_EQ | OP_GREATER_THAN_OR_EQ
+  private static boolean comparisonExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "comparisonExpr_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, OP_EQUALS);
+    if (!r) r = consumeTokenSmart(b, OP_NOT_EQUALS);
+    if (!r) r = consumeTokenSmart(b, OP_LESS_THAN);
+    if (!r) r = consumeTokenSmart(b, OP_GREATER_THAN);
+    if (!r) r = consumeTokenSmart(b, OP_LESS_THAN_OR_EQ);
+    if (!r) r = consumeTokenSmart(b, OP_GREATER_THAN_OR_EQ);
+    return r;
+  }
+
+  // OP_PLUS | OP_BINARY_MINUS
+  private static boolean addExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "addExpr_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, OP_PLUS);
+    if (!r) r = consumeTokenSmart(b, OP_BINARY_MINUS);
+    return r;
+  }
+
+  public static boolean unaryExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unaryExpr")) return false;
+    if (!nextTokenIsSmart(b, OP_BANG, OP_UNARY_MINUS)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = unaryExpr_0(b, l + 1);
+    p = r;
+    r = p && expr(b, l, 10);
+    exit_section_(b, l, m, UNARY_EXPR, r, p, null);
+    return r || p;
+  }
+
+  // OP_UNARY_MINUS | OP_BANG
+  private static boolean unaryExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unaryExpr_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, OP_UNARY_MINUS);
+    if (!r) r = consumeTokenSmart(b, OP_BANG);
     return r;
   }
 
@@ -3038,6 +3169,17 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = consumeTokenSmart(b, LOWER_IDENT);
     if (!r) r = consumeTokenSmart(b, NAMED_UNDERSCORE);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // TRIPLE_DOT
+  public static boolean ellipsisExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ellipsisExpr")) return false;
+    if (!nextTokenIsSmart(b, TRIPLE_DOT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, TRIPLE_DOT);
+    exit_section_(b, m, ELLIPSIS_EXPR, r);
     return r;
   }
 

@@ -11,8 +11,10 @@ public interface RocTypes {
   IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
+  IElementType BINARY_EXPR = new RocElementType("BINARY_EXPR");
   IElementType CALL_EXPR = new RocElementType("CALL_EXPR");
   IElementType CHAR_LITERAL = new RocElementType("CHAR_LITERAL");
+  IElementType ELLIPSIS_EXPR = new RocElementType("ELLIPSIS_EXPR");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
   IElementType EXPR = new RocElementType("EXPR");
@@ -46,6 +48,7 @@ public interface RocTypes {
   IElementType PLATFORM_TARGETS = new RocElementType("PLATFORM_TARGETS");
   IElementType PROVIDES = new RocElementType("PROVIDES");
   IElementType QUALIFIED_NAME_EXPR = new RocElementType("QUALIFIED_NAME_EXPR");
+  IElementType QUESTION_SUFFIX_EXPR = new RocElementType("QUESTION_SUFFIX_EXPR");
   IElementType RECORD_EXPR = new RocElementType("RECORD_EXPR");
   IElementType RECORD_EXPR_EXT = new RocElementType("RECORD_EXPR_EXT");
   IElementType RECORD_EXPR_FIELD = new RocElementType("RECORD_EXPR_FIELD");
@@ -79,6 +82,7 @@ public interface RocTypes {
   IElementType TYPE_HEADER_ARGS = new RocElementType("TYPE_HEADER_ARGS");
   IElementType TYPE_PARAM = new RocElementType("TYPE_PARAM");
   IElementType TYPE_REFERENCE = new RocElementType("TYPE_REFERENCE");
+  IElementType UNARY_EXPR = new RocElementType("UNARY_EXPR");
   IElementType UNDERSCORE_PATTERN = new RocElementType("UNDERSCORE_PATTERN");
   IElementType VALUE_ANNOTATION = new RocElementType("VALUE_ANNOTATION");
   IElementType VALUE_DECL = new RocElementType("VALUE_DECL");
@@ -196,11 +200,17 @@ public interface RocTypes {
       else if (type == AS_PATTERN) {
         return new RocAsPatternImpl(node);
       }
+      else if (type == BINARY_EXPR) {
+        return new RocBinaryExprImpl(node);
+      }
       else if (type == CALL_EXPR) {
         return new RocCallExprImpl(node);
       }
       else if (type == CHAR_LITERAL) {
         return new RocCharLiteralImpl(node);
+      }
+      else if (type == ELLIPSIS_EXPR) {
+        return new RocEllipsisExprImpl(node);
       }
       else if (type == EXPOSED_ITEM) {
         return new RocExposedItemImpl(node);
@@ -297,6 +307,9 @@ public interface RocTypes {
       }
       else if (type == QUALIFIED_NAME_EXPR) {
         return new RocQualifiedNameExprImpl(node);
+      }
+      else if (type == QUESTION_SUFFIX_EXPR) {
+        return new RocQuestionSuffixExprImpl(node);
       }
       else if (type == RECORD_EXPR) {
         return new RocRecordExprImpl(node);
@@ -396,6 +409,9 @@ public interface RocTypes {
       }
       else if (type == TYPE_REFERENCE) {
         return new RocTypeReferenceImpl(node);
+      }
+      else if (type == UNARY_EXPR) {
+        return new RocUnaryExprImpl(node);
       }
       else if (type == UNDERSCORE_PATTERN) {
         return new RocUnderscorePatternImpl(node);

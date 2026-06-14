@@ -204,6 +204,50 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprChained() = doTest(true)
 
+    // -- operators: precedence, unary, postfix ? (M4d; hosted by valueDecl; see Roc.bnf) --
+
+    @Test
+    fun testExprAddMul() = doTest(true)
+
+    @Test
+    fun testExprMulDiv() = doTest(true)
+
+    @Test
+    fun testExprAddSub() = doTest(true)
+
+    @Test
+    fun testExprComparison() = doTest(true)
+
+    @Test
+    fun testExprAndOr() = doTest(true)
+
+    @Test
+    fun testExprOrAssoc() = doTest(true)
+
+    @Test
+    fun testExprCoalesce() = doTest(true)
+
+    @Test
+    fun testExprBinQuestion() = doTest(true)
+
+    @Test
+    fun testExprUnaryMinus() = doTest(true)
+
+    @Test
+    fun testExprUnaryBang() = doTest(true)
+
+    @Test
+    fun testExprUnaryField() = doTest(true)
+
+    @Test
+    fun testExprQuestionSuffix() = doTest(true)
+
+    @Test
+    fun testExprEllipsis() = doTest(true)
+
+    @Test
+    fun testExprLadder() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

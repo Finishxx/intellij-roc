@@ -331,19 +331,65 @@ inferredType    ::= UNDERSCORE        // _
 inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 
 // == expressions (M4) =======================================
-// parseExprWithBp in the Zig reference, via Grammar-Kit's expression engine. The postfix
-// suffix rules are left-recursive (they reference `expr` on the left), so the generator
-// emits a Pratt parser that builds the left-nested tree (`a.b(c).d` → field(method(a,b,c),d)).
-// Listed low→high priority, top→bottom: suffixes first, then the primary atoms (tightest)
-// last. `expr` is the engine root — it produces NO node of its own; the matched alternative
-// produces its node, so existing atom/collection trees are unchanged.
-expr ::= callExpr
+// parseExprWithBp in the Zig reference, via Grammar-Kit's expression engine. `expr` is the
+// engine root — it produces NO node of its own; the matched alternative produces its node, so
+// existing atom/collection trees are unchanged. Alternatives are listed LOOSEST→TIGHTEST
+// (top→bottom), which is how the engine assigns precedence: the binary ladder (M4d) loosest,
+// then unary, then the left-recursive postfix suffixes (M4c), then the primary atoms (tightest).
+// Binary precedence/associativity mirror getTokenBP (Parser.zig 4321); see the ladder below.
+expr ::= orExpr
+       | andExpr
+       | comparisonExpr
+       | binQuestionExpr      // binary `?`
+       | coalesceExpr         // `??`
+       | addExpr              // `+` `-`
+       | modExpr              // `%`
+       | intDivExpr           // `//`
+       | divExpr              // `/`
+       | mulExpr              // `*`
+       | unaryExpr            // prefix `-` `!`
+       | callExpr
        | methodCallExpr
        | fieldAccessExpr
        | tupleAccessExpr
+       | questionSuffixExpr   // postfix `?` (NO_SPACE_OP_QUESTION)
        | intLiteral | floatLiteral | charLiteral | string
        | qualifiedNameExpr | tagExpr | identExpr
+       | ellipsisExpr         // `...`
        | listExpr | tupleExpr | recordExpr
+
+// -- binary-operator ladder (M4d) ---------------------------
+// All binary operators share ONE BINARY_EXPR node (faithful to the reference's single bin_op);
+// the operator token distinguishes them. The `fake` base generates the RocBinaryExpr PSI
+// interface (+ left/right accessors) but no parser; each real rule reuses its element type via
+// `elementType`. Precedence is set by each rule's position in `expr` above (ascending
+// getTokenBP). `and`/`or` are right-assoc (reference left-bp > right-bp); the rest left
+// (engine default). `extends=binaryExpr` overrides the global `extends(...)=expr`, but
+// `binaryExpr` itself matches `.*Expr` so every rule still extends the `expr` root.
+fake binaryExpr ::= expr binaryOp expr { methods=[ left="expr[0]" right="expr[1]" ] }
+private binaryOp ::= OP_STAR | OP_SLASH | OP_DOUBLE_SLASH | OP_PERCENT | OP_PLUS
+                   | OP_BINARY_MINUS | OP_DOUBLE_QUESTION | OP_QUESTION | OP_EQUALS
+                   | OP_NOT_EQUALS | OP_LESS_THAN | OP_GREATER_THAN | OP_LESS_THAN_OR_EQ
+                   | OP_GREATER_THAN_OR_EQ | KW_AND | KW_OR
+
+orExpr          ::= expr KW_OR  expr { extends=binaryExpr elementType=binaryExpr rightAssociative=true }
+andExpr         ::= expr KW_AND expr { extends=binaryExpr elementType=binaryExpr rightAssociative=true }
+// Comparisons collapse into ONE non-associative tier: the reference's 6 distinct levels only
+// diverge on CHAINED comparisons, which are a semantic error. Engine default left-assoc here;
+// the non-associativity rule is a later semantic check, not grammar.
+comparisonExpr  ::= expr (OP_EQUALS | OP_NOT_EQUALS | OP_LESS_THAN | OP_GREATER_THAN
+                          | OP_LESS_THAN_OR_EQ | OP_GREATER_THAN_OR_EQ) expr { extends=binaryExpr elementType=binaryExpr }
+binQuestionExpr ::= expr OP_QUESTION         expr { extends=binaryExpr elementType=binaryExpr }
+coalesceExpr    ::= expr OP_DOUBLE_QUESTION  expr { extends=binaryExpr elementType=binaryExpr }
+addExpr         ::= expr (OP_PLUS | OP_BINARY_MINUS) expr { extends=binaryExpr elementType=binaryExpr }
+modExpr         ::= expr OP_PERCENT      expr { extends=binaryExpr elementType=binaryExpr }
+intDivExpr      ::= expr OP_DOUBLE_SLASH expr { extends=binaryExpr elementType=binaryExpr }
+divExpr         ::= expr OP_SLASH        expr { extends=binaryExpr elementType=binaryExpr }
+mulExpr         ::= expr OP_STAR         expr { extends=binaryExpr elementType=binaryExpr }
+
+// Prefix unary — distinct tokens (OP_UNARY_MINUS / OP_BANG, not the binary OP_BINARY_MINUS),
+// one UNARY_EXPR node. Binds tighter than all binary, looser than the suffixes (`-a.b` = `-(a.b)`).
+unaryExpr ::= (OP_UNARY_MINUS | OP_BANG) expr
 
 // Postfix application/access — each wraps the preceding `expr`. Application needs a no-space
 // `(` (NO_SPACE_LPAREN); the dot before field/method/tuple access may be spaced, so method
@@ -355,6 +401,9 @@ callExpr        ::= expr callArgs
 methodCallExpr  ::= expr (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) callArgs
 fieldAccessExpr ::= expr (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT)
 tupleAccessExpr ::= expr (NO_SPACE_DOT_INT | DOT_INT)
+// Postfix `?` (try-propagation) — the NO-space token; suffix tier, left-recursive like the
+// access suffixes above. Distinct from the spaced binary `?`/`??` (OP_QUESTION/OP_DOUBLE_QUESTION).
+questionSuffixExpr ::= expr NO_SPACE_OP_QUESTION
 private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
 
 // Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
@@ -380,6 +429,10 @@ identExpr ::= LOWER_IDENT | NAMED_UNDERSCORE
 qualifiedNameExpr ::= UPPER_IDENT qualChainSeg+
 tagExpr           ::= UPPER_IDENT
 private qualChainSeg ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
+
+// `...` placeholder/ellipsis — a standalone primary expression (Parser.zig 3107 `.TripleDot`),
+// NOT a prefix operator.
+ellipsisExpr ::= TRIPLE_DOT
 
 listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
 

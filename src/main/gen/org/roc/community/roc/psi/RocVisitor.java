@@ -19,11 +19,19 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitBinaryExpr(@NotNull RocBinaryExpr o) {
+    visitExpr(o);
+  }
+
   public void visitCallExpr(@NotNull RocCallExpr o) {
     visitExpr(o);
   }
 
   public void visitCharLiteral(@NotNull RocCharLiteral o) {
+    visitExpr(o);
+  }
+
+  public void visitEllipsisExpr(@NotNull RocEllipsisExpr o) {
     visitExpr(o);
   }
 
@@ -159,6 +167,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitQuestionSuffixExpr(@NotNull RocQuestionSuffixExpr o) {
+    visitExpr(o);
+  }
+
   public void visitRecordExpr(@NotNull RocRecordExpr o) {
     visitExpr(o);
   }
@@ -289,6 +301,10 @@ public class RocVisitor extends PsiElementVisitor {
 
   public void visitTypeReference(@NotNull RocTypeReference o) {
     visitPsiElement(o);
+  }
+
+  public void visitUnaryExpr(@NotNull RocUnaryExpr o) {
+    visitExpr(o);
   }
 
   public void visitUnderscorePattern(@NotNull RocUnderscorePattern o) {
