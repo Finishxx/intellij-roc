@@ -137,7 +137,7 @@ root ::= header? topLevelItem*
 // type-declaration statements (below) now cover those inputs.
 private topLevelItem ::= statement | throwaway
 
-private statement ::= importStatement | valueAnnotation | typeDecl | valueDecl
+private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | valueDecl
 private throwaway ::=
       LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
     | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
@@ -227,6 +227,17 @@ whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
 // testing. The RHS is now a real (atoms-only) `expr`; this becomes the genuine
 // value/destructure decl at M4f, once `expr` is complete and keyword statements land.
 valueDecl ::= patternNoAlts OP_ASSIGN expr
+
+// == keyword statements =====================================
+// parseStmtByType (Parser.zig 1791-1906), shared by `statement` and `blockStmt`. Context limits
+// (var in-body, import top-level) are a later-phase check, not grammar. `var` waits for the
+// valueDecl rework; `dbg`/`for` are expressions (see dbgExpr/forExpr).
+private keywordStmt ::= expectStmt | crashStmt | returnStmt | whileStmt | breakStmt
+expectStmt ::= KW_EXPECT expr
+crashStmt  ::= KW_CRASH  expr
+returnStmt ::= KW_RETURN expr       // statement-only; in expr position the reference malforms it (3137)
+whileStmt  ::= KW_WHILE  expr expr  // cond, body
+breakStmt  ::= KW_BREAK
 
 // == patterns ===============================================
 private pattern       ::= alternativesPattern | asPattern | patternPrimary
@@ -356,7 +367,7 @@ expr ::= orExpr
        | intLiteral | floatLiteral | charLiteral | string
        | qualifiedNameExpr | tagExpr | identExpr
        | ellipsisExpr         // `...`
-       | ifExpr | matchExpr | forExpr | lambdaExpr   // control flow (M4e)
+       | ifExpr | matchExpr | forExpr | lambdaExpr | dbgExpr   // control flow (M4e/M4f)
        | listExpr | tupleExpr | recordExpr | blockExpr   // recordExpr FIRST (see blockExpr)
 
 // -- binary-operator ladder (M4d) ---------------------------
@@ -465,6 +476,11 @@ lambdaExpr ::= OP_BAR (patternNoAlts (COMMA patternNoAlts)* COMMA?)? OP_BAR expr
 // via expr, so there is no conflict.)
 forExpr ::= KW_FOR patternNoAlts KW_IN expr expr
 
+// `dbg <expr>` — expression primary (Parser.zig 3084), like forExpr. Also a statement in the ref
+// (1842), but the expression form covers both our contexts (RHS, and block stmt via blockStmt's
+// `expr` arm). Standalone top-level `dbg y` waits on the top-level bare-expr arm (next slice).
+dbgExpr ::= KW_DBG expr
+
 listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
 
 // A single `(a)` is built as a 1-tuple, not a grouping node — faithful to parseExprWithBp
@@ -487,9 +503,8 @@ recordExprField ::= LOWER_IDENT (OP_COLON expr)?
 // predicate). `+` (non-empty) leaves `{}` to recordExpr, the reference's empty record.
 blockExpr ::= LBRACE blockStmt+ RBRACE
 
-// MINIMAL slice — keyword statements (expect/crash/return/var/while/break/dbg) deferred to M4f.
 // Private: the concrete node attaches directly under BLOCK_EXPR, like top-level `statement`.
-private blockStmt ::= valueDecl | valueAnnotation | expr
+private blockStmt ::= keywordStmt | valueDecl | valueAnnotation | expr
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]

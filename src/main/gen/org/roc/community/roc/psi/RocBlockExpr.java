@@ -8,12 +8,27 @@ import com.intellij.psi.PsiElement;
 public interface RocBlockExpr extends RocExpr {
 
   @NotNull
+  List<RocBreakStmt> getBreakStmtList();
+
+  @NotNull
+  List<RocCrashStmt> getCrashStmtList();
+
+  @NotNull
+  List<RocExpectStmt> getExpectStmtList();
+
+  @NotNull
   List<RocExpr> getExprList();
+
+  @NotNull
+  List<RocReturnStmt> getReturnStmtList();
 
   @NotNull
   List<RocValueAnnotation> getValueAnnotationList();
 
   @NotNull
   List<RocValueDecl> getValueDeclList();
+
+  @NotNull
+  List<RocWhileStmt> getWhileStmtList();
 
 }

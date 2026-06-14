@@ -13,9 +13,13 @@ public interface RocTypes {
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
   IElementType BINARY_EXPR = new RocElementType("BINARY_EXPR");
   IElementType BLOCK_EXPR = new RocElementType("BLOCK_EXPR");
+  IElementType BREAK_STMT = new RocElementType("BREAK_STMT");
   IElementType CALL_EXPR = new RocElementType("CALL_EXPR");
   IElementType CHAR_LITERAL = new RocElementType("CHAR_LITERAL");
+  IElementType CRASH_STMT = new RocElementType("CRASH_STMT");
+  IElementType DBG_EXPR = new RocElementType("DBG_EXPR");
   IElementType ELLIPSIS_EXPR = new RocElementType("ELLIPSIS_EXPR");
+  IElementType EXPECT_STMT = new RocElementType("EXPECT_STMT");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
   IElementType EXPR = new RocElementType("EXPR");
@@ -66,6 +70,7 @@ public interface RocTypes {
   IElementType REQUIRES_ENTRY = new RocElementType("REQUIRES_ENTRY");
   IElementType REQUIRES_FOR_ALIAS = new RocElementType("REQUIRES_FOR_ALIAS");
   IElementType REQUIRES_FOR_CLAUSE = new RocElementType("REQUIRES_FOR_CLAUSE");
+  IElementType RETURN_STMT = new RocElementType("RETURN_STMT");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
   IElementType TAG_EXPR = new RocElementType("TAG_EXPR");
@@ -96,6 +101,7 @@ public interface RocTypes {
   IElementType WHERE_ALIAS = new RocElementType("WHERE_ALIAS");
   IElementType WHERE_CLAUSE = new RocElementType("WHERE_CLAUSE");
   IElementType WHERE_METHOD = new RocElementType("WHERE_METHOD");
+  IElementType WHILE_STMT = new RocElementType("WHILE_STMT");
 
   IElementType CLOSE_STRING_INTERPOLATION = new RocTokenType("CLOSE_STRING_INTERPOLATION");
   IElementType COMMA = new RocTokenType(",");
@@ -212,14 +218,26 @@ public interface RocTypes {
       else if (type == BLOCK_EXPR) {
         return new RocBlockExprImpl(node);
       }
+      else if (type == BREAK_STMT) {
+        return new RocBreakStmtImpl(node);
+      }
       else if (type == CALL_EXPR) {
         return new RocCallExprImpl(node);
       }
       else if (type == CHAR_LITERAL) {
         return new RocCharLiteralImpl(node);
       }
+      else if (type == CRASH_STMT) {
+        return new RocCrashStmtImpl(node);
+      }
+      else if (type == DBG_EXPR) {
+        return new RocDbgExprImpl(node);
+      }
       else if (type == ELLIPSIS_EXPR) {
         return new RocEllipsisExprImpl(node);
+      }
+      else if (type == EXPECT_STMT) {
+        return new RocExpectStmtImpl(node);
       }
       else if (type == EXPOSED_ITEM) {
         return new RocExposedItemImpl(node);
@@ -368,6 +386,9 @@ public interface RocTypes {
       else if (type == REQUIRES_FOR_CLAUSE) {
         return new RocRequiresForClauseImpl(node);
       }
+      else if (type == RETURN_STMT) {
+        return new RocReturnStmtImpl(node);
+      }
       else if (type == STRING) {
         return new RocStringImpl(node);
       }
@@ -457,6 +478,9 @@ public interface RocTypes {
       }
       else if (type == WHERE_METHOD) {
         return new RocWhereMethodImpl(node);
+      }
+      else if (type == WHILE_STMT) {
+        return new RocWhileStmtImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

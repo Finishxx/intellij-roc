@@ -300,6 +300,29 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprIfBlock() = doTest(true)
 
+    // -- keyword statements + dbg expr (M4f-stmts; see Roc.bnf) --
+
+    @Test
+    fun testStmtExpect() = doTest(true)
+
+    @Test
+    fun testStmtCrash() = doTest(true)
+
+    @Test
+    fun testStmtWhile() = doTest(true)
+
+    @Test
+    fun testStmtBreak() = doTest(true)
+
+    @Test
+    fun testExprDbg() = doTest(true)
+
+    @Test
+    fun testStmtReturnInBlock() = doTest(true)
+
+    @Test
+    fun testBlockKeywordStmts() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

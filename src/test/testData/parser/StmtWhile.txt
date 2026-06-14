@@ -1,0 +1,9 @@
+FILE
+  RocWhileStmtImpl(WHILE_STMT)
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('c')
+    PsiWhiteSpace(' ')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('x')

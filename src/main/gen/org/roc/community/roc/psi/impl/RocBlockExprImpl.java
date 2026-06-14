@@ -29,8 +29,32 @@ public class RocBlockExprImpl extends RocExprImpl implements RocBlockExpr {
 
   @Override
   @NotNull
+  public List<RocBreakStmt> getBreakStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocBreakStmt.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RocCrashStmt> getCrashStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocCrashStmt.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RocExpectStmt> getExpectStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocExpectStmt.class);
+  }
+
+  @Override
+  @NotNull
   public List<RocExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocExpr.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RocReturnStmt> getReturnStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocReturnStmt.class);
   }
 
   @Override
@@ -43,6 +67,12 @@ public class RocBlockExprImpl extends RocExprImpl implements RocBlockExpr {
   @NotNull
   public List<RocValueDecl> getValueDeclList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocValueDecl.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RocWhileStmt> getWhileStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocWhileStmt.class);
   }
 
 }

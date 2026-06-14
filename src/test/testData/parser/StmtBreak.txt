@@ -1,0 +1,3 @@
+FILE
+  RocBreakStmtImpl(BREAK_STMT)
+    PsiElement(break)('break')

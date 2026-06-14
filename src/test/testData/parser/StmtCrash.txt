@@ -1,0 +1,8 @@
+FILE
+  RocCrashStmtImpl(CRASH_STMT)
+    PsiElement(crash)('crash')
+    PsiWhiteSpace(' ')
+    RocStringImpl(STRING)
+      PsiElement(STRING_START)('"')
+      PsiElement(STRING_PART)('boom')
+      PsiElement(STRING_END)('"')

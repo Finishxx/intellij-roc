@@ -1,0 +1,12 @@
+FILE
+  RocExpectStmtImpl(EXPECT_STMT)
+    PsiElement(expect)('expect')
+    PsiWhiteSpace(' ')
+    RocBinaryExprImpl(BINARY_EXPR)
+      RocIdentExprImpl(IDENT_EXPR)
+        PsiElement(LOWER_IDENT)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      RocIntLiteralImpl(INT_LITERAL)
+        PsiElement(INT)('5')
