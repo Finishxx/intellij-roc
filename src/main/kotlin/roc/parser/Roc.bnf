@@ -356,6 +356,7 @@ expr ::= orExpr
        | intLiteral | floatLiteral | charLiteral | string
        | qualifiedNameExpr | tagExpr | identExpr
        | ellipsisExpr         // `...`
+       | ifExpr | matchExpr | forExpr | lambdaExpr   // control flow (M4e)
        | listExpr | tupleExpr | recordExpr
 
 // -- binary-operator ladder (M4d) ---------------------------
@@ -433,6 +434,36 @@ private qualChainSeg ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
 // `...` placeholder/ellipsis — a standalone primary expression (Parser.zig 3107 `.TripleDot`),
 // NOT a prefix operator.
 ellipsisExpr ::= TRIPLE_DOT
+
+// -- control-flow keyword expressions (M4e) -----------------
+// Primary-switch arms of parseExprWithBp. All are EXPRESSIONS in Roc (the reference puts
+// if/match/for/lambda in parseExprWithBp, not parseStmt), so each matches `.*Expr` and joins the
+// engine as a primary via the global extends(...). Their lead tokens (KW_IF/KW_MATCH/KW_FOR/OP_BAR)
+// are disjoint from every other primary. Bodies are full `expr`s — in practice a block (a later
+// slice), but any expr works: Roc has no juxtaposition application, so adjacent exprs are
+// unambiguous (the inner `expr` parses to completion, then the next has no linking operator/suffix).
+
+// No `then` keyword in Roc — the branches are juxtaposed. Missing `else` is the reference's
+// statement-form `if_without_else` (Parser.zig 3034); we accept it as an IF_EXPR with no else.
+ifExpr ::= KW_IF expr expr (KW_ELSE expr)?
+
+// `match subject { pattern (if guard)? => body, … }`. The braces belong to matchExpr (consumed
+// positionally, Parser.zig 3060) — NOT a standalone `{` primary, so no record/block ambiguity.
+// Branches optionally comma-separated, trailing comma allowed; the `=>` is OP_FAT_ARROW (the
+// reference also tolerates `->` with a diagnostic — left to a later phase). matchBranch is a
+// regular node (doesn't match `.*Expr`, stays out of the engine); its pattern allows alternatives.
+matchExpr   ::= KW_MATCH expr LBRACE matchBranch (COMMA? matchBranch)* COMMA? RBRACE
+matchBranch ::= pattern (KW_IF expr)? OP_FAT_ARROW expr
+
+// Closure `|args| body` — patternNoAlts list (alternatives forbidden) between two bars; `||` (no
+// args) allowed (Parser.zig 3012). OP_BAR is a unique lead token (`|>` is the distinct OP_PIZZA,
+// and there is no `||` token — logical-or is KW_OR — so `||` lexes as two OP_BAR).
+lambdaExpr ::= OP_BAR (patternNoAlts (COMMA patternNoAlts)* COMMA?)? OP_BAR expr
+
+// `for pattern in iterable body` — `for` is an expression in Roc (Parser.zig 3092); pattern is
+// alternatives-forbidden. (The platform header's KW_FOR is a header-only position, never reached
+// via expr, so there is no conflict.)
+forExpr ::= KW_FOR patternNoAlts KW_IN expr expr
 
 listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
 

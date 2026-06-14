@@ -1,0 +1,13 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocIdentPatternImpl(IDENT_PATTERN)
+      PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RocLambdaExprImpl(LAMBDA_EXPR)
+      PsiElement(|)('|')
+      PsiElement(|)('|')
+      PsiWhiteSpace(' ')
+      RocIdentExprImpl(IDENT_EXPR)
+        PsiElement(LOWER_IDENT)('a')

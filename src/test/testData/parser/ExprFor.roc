@@ -1,0 +1,1 @@
+x = for n in list n

@@ -20,21 +20,26 @@ public interface RocTypes {
   IElementType EXPR = new RocElementType("EXPR");
   IElementType FIELD_ACCESS_EXPR = new RocElementType("FIELD_ACCESS_EXPR");
   IElementType FLOAT_LITERAL = new RocElementType("FLOAT_LITERAL");
+  IElementType FOR_EXPR = new RocElementType("FOR_EXPR");
   IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
   IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
   IElementType IDENT_EXPR = new RocElementType("IDENT_EXPR");
   IElementType IDENT_PATTERN = new RocElementType("IDENT_PATTERN");
+  IElementType IF_EXPR = new RocElementType("IF_EXPR");
   IElementType IMPORT_ALIAS = new RocElementType("IMPORT_ALIAS");
   IElementType IMPORT_EXPOSING = new RocElementType("IMPORT_EXPOSING");
   IElementType IMPORT_STATEMENT = new RocElementType("IMPORT_STATEMENT");
   IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
   IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
   IElementType INT_LITERAL = new RocElementType("INT_LITERAL");
+  IElementType LAMBDA_EXPR = new RocElementType("LAMBDA_EXPR");
   IElementType LIST_EXPR = new RocElementType("LIST_EXPR");
   IElementType LIST_PATTERN = new RocElementType("LIST_PATTERN");
   IElementType LIST_REST_PATTERN = new RocElementType("LIST_REST_PATTERN");
   IElementType LITERAL_PATTERN = new RocElementType("LITERAL_PATTERN");
+  IElementType MATCH_BRANCH = new RocElementType("MATCH_BRANCH");
+  IElementType MATCH_EXPR = new RocElementType("MATCH_EXPR");
   IElementType METHOD_CALL_EXPR = new RocElementType("METHOD_CALL_EXPR");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType MODULE_NAME = new RocElementType("MODULE_NAME");
@@ -224,6 +229,9 @@ public interface RocTypes {
       else if (type == FLOAT_LITERAL) {
         return new RocFloatLiteralImpl(node);
       }
+      else if (type == FOR_EXPR) {
+        return new RocForExprImpl(node);
+      }
       else if (type == FUNCTION_TYPE) {
         return new RocFunctionTypeImpl(node);
       }
@@ -238,6 +246,9 @@ public interface RocTypes {
       }
       else if (type == IDENT_PATTERN) {
         return new RocIdentPatternImpl(node);
+      }
+      else if (type == IF_EXPR) {
+        return new RocIfExprImpl(node);
       }
       else if (type == IMPORT_ALIAS) {
         return new RocImportAliasImpl(node);
@@ -257,6 +268,9 @@ public interface RocTypes {
       else if (type == INT_LITERAL) {
         return new RocIntLiteralImpl(node);
       }
+      else if (type == LAMBDA_EXPR) {
+        return new RocLambdaExprImpl(node);
+      }
       else if (type == LIST_EXPR) {
         return new RocListExprImpl(node);
       }
@@ -268,6 +282,12 @@ public interface RocTypes {
       }
       else if (type == LITERAL_PATTERN) {
         return new RocLiteralPatternImpl(node);
+      }
+      else if (type == MATCH_BRANCH) {
+        return new RocMatchBranchImpl(node);
+      }
+      else if (type == MATCH_EXPR) {
+        return new RocMatchExprImpl(node);
       }
       else if (type == METHOD_CALL_EXPR) {
         return new RocMethodCallExprImpl(node);

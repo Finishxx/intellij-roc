@@ -248,6 +248,35 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprLadder() = doTest(true)
 
+    // -- control flow: if / match / closure / for (M4e; hosted by valueDecl; see Roc.bnf) --
+
+    @Test
+    fun testExprIf() = doTest(true)
+
+    @Test
+    fun testExprIfNoElse() = doTest(true)
+
+    @Test
+    fun testExprMatch() = doTest(true)
+
+    @Test
+    fun testExprMatchGuard() = doTest(true)
+
+    @Test
+    fun testExprMatchAlt() = doTest(true)
+
+    @Test
+    fun testExprLambda() = doTest(true)
+
+    @Test
+    fun testExprLambdaNoArgs() = doTest(true)
+
+    @Test
+    fun testExprFor() = doTest(true)
+
+    @Test
+    fun testExprIfMatch() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test
