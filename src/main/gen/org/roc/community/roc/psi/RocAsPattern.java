@@ -31,9 +31,6 @@ public interface RocAsPattern extends PsiElement {
   @Nullable
   RocUnderscorePattern getUnderscorePattern();
 
-  @Nullable
-  RocVarPattern getVarPattern();
-
   @NotNull
   PsiElement getLowerIdent();
 

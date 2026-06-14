@@ -88,12 +88,6 @@ public class RocTuplePatternImpl extends ASTWrapperPsiElement implements RocTupl
   }
 
   @Override
-  @NotNull
-  public List<RocVarPattern> getVarPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocVarPattern.class);
-  }
-
-  @Override
   @Nullable
   public PsiElement getNoSpaceLparen() {
     return findChildByType(NO_SPACE_LPAREN);

@@ -11,20 +11,26 @@ import static org.roc.community.roc.psi.RocTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.roc.community.roc.psi.*;
 
-public class RocVarPatternImpl extends ASTWrapperPsiElement implements RocVarPattern {
+public class RocVarDeclImpl extends ASTWrapperPsiElement implements RocVarDecl {
 
-  public RocVarPatternImpl(@NotNull ASTNode node) {
+  public RocVarDeclImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RocVisitor visitor) {
-    visitor.visitVarPattern(this);
+    visitor.visitVarDecl(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof RocVisitor) accept((RocVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public RocExpr getExpr() {
+    return findNotNullChildByClass(RocExpr.class);
   }
 
   @Override

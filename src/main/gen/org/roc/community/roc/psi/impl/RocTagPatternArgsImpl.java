@@ -89,12 +89,6 @@ public class RocTagPatternArgsImpl extends ASTWrapperPsiElement implements RocTa
 
   @Override
   @NotNull
-  public List<RocVarPattern> getVarPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocVarPattern.class);
-  }
-
-  @Override
-  @NotNull
   public PsiElement getNoSpaceLparen() {
     return findNotNullChildByType(NO_SPACE_LPAREN);
   }

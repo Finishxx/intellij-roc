@@ -29,6 +29,9 @@ public interface RocBlockExpr extends RocExpr {
   List<RocValueDecl> getValueDeclList();
 
   @NotNull
+  List<RocVarDecl> getVarDeclList();
+
+  @NotNull
   List<RocWhileStmt> getWhileStmtList();
 
 }

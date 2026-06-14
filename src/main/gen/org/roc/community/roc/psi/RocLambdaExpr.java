@@ -34,7 +34,4 @@ public interface RocLambdaExpr extends RocExpr {
   @NotNull
   List<RocUnderscorePattern> getUnderscorePatternList();
 
-  @NotNull
-  List<RocVarPattern> getVarPatternList();
-
 }

@@ -97,7 +97,7 @@ public interface RocTypes {
   IElementType UNDERSCORE_PATTERN = new RocElementType("UNDERSCORE_PATTERN");
   IElementType VALUE_ANNOTATION = new RocElementType("VALUE_ANNOTATION");
   IElementType VALUE_DECL = new RocElementType("VALUE_DECL");
-  IElementType VAR_PATTERN = new RocElementType("VAR_PATTERN");
+  IElementType VAR_DECL = new RocElementType("VAR_DECL");
   IElementType WHERE_ALIAS = new RocElementType("WHERE_ALIAS");
   IElementType WHERE_CLAUSE = new RocElementType("WHERE_CLAUSE");
   IElementType WHERE_METHOD = new RocElementType("WHERE_METHOD");
@@ -467,8 +467,8 @@ public interface RocTypes {
       else if (type == VALUE_DECL) {
         return new RocValueDeclImpl(node);
       }
-      else if (type == VAR_PATTERN) {
-        return new RocVarPatternImpl(node);
+      else if (type == VAR_DECL) {
+        return new RocVarDeclImpl(node);
       }
       else if (type == WHERE_ALIAS) {
         return new RocWhereAliasImpl(node);

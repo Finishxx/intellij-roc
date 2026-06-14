@@ -81,10 +81,4 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
     return findChildByClass(RocUnderscorePattern.class);
   }
 
-  @Override
-  @Nullable
-  public RocVarPattern getVarPattern() {
-    return findChildByClass(RocVarPattern.class);
-  }
-
 }

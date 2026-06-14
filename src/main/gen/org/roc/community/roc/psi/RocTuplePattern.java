@@ -37,9 +37,6 @@ public interface RocTuplePattern extends PsiElement {
   @NotNull
   List<RocUnderscorePattern> getUnderscorePatternList();
 
-  @NotNull
-  List<RocVarPattern> getVarPatternList();
-
   @Nullable
   PsiElement getNoSpaceLparen();
 

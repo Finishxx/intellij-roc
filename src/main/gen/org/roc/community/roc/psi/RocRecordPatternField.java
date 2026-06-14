@@ -38,9 +38,6 @@ public interface RocRecordPatternField extends PsiElement {
   RocUnderscorePattern getUnderscorePattern();
 
   @Nullable
-  RocVarPattern getVarPattern();
-
-  @Nullable
   PsiElement getLowerIdent();
 
 }

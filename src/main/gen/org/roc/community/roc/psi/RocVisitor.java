@@ -363,7 +363,7 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitVarPattern(@NotNull RocVarPattern o) {
+  public void visitVarDecl(@NotNull RocVarDecl o) {
     visitPsiElement(o);
   }
 

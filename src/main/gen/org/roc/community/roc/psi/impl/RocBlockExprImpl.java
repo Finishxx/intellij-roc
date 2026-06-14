@@ -71,6 +71,12 @@ public class RocBlockExprImpl extends RocExprImpl implements RocBlockExpr {
 
   @Override
   @NotNull
+  public List<RocVarDecl> getVarDeclList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocVarDecl.class);
+  }
+
+  @Override
+  @NotNull
   public List<RocWhileStmt> getWhileStmtList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocWhileStmt.class);
   }

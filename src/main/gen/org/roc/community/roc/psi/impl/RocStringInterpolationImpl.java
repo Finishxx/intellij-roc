@@ -29,6 +29,12 @@ public class RocStringInterpolationImpl extends ASTWrapperPsiElement implements 
 
   @Override
   @NotNull
+  public RocExpr getExpr() {
+    return findNotNullChildByClass(RocExpr.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getCloseStringInterpolation() {
     return findNotNullChildByType(CLOSE_STRING_INTERPOLATION);
   }

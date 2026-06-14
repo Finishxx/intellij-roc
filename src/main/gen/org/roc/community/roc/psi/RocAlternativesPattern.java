@@ -31,7 +31,4 @@ public interface RocAlternativesPattern extends PsiElement {
   @NotNull
   List<RocUnderscorePattern> getUnderscorePatternList();
 
-  @NotNull
-  List<RocVarPattern> getVarPatternList();
-
 }

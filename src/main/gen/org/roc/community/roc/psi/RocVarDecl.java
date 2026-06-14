@@ -5,7 +5,10 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocVarPattern extends PsiElement {
+public interface RocVarDecl extends PsiElement {
+
+  @NotNull
+  RocExpr getExpr();
 
   @NotNull
   PsiElement getLowerIdent();

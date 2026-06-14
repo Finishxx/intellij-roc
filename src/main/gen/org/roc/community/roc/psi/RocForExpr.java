@@ -34,7 +34,4 @@ public interface RocForExpr extends RocExpr {
   @Nullable
   RocUnderscorePattern getUnderscorePattern();
 
-  @Nullable
-  RocVarPattern getVarPattern();
-
 }

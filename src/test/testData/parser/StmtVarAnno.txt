@@ -1,0 +1,10 @@
+FILE
+  RocValueAnnotationImpl(VALUE_ANNOTATION)
+    PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    RocTypeReferenceImpl(TYPE_REFERENCE)
+      PsiElement(UPPER_IDENT)('U64')

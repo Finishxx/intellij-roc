@@ -89,12 +89,6 @@ public class RocRecordPatternFieldImpl extends ASTWrapperPsiElement implements R
 
   @Override
   @Nullable
-  public RocVarPattern getVarPattern() {
-    return findChildByClass(RocVarPattern.class);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getLowerIdent() {
     return findChildByType(LOWER_IDENT);
   }

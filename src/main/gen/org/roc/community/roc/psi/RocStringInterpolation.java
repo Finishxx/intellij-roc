@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RocStringInterpolation extends PsiElement {
 
   @NotNull
+  RocExpr getExpr();
+
+  @NotNull
   PsiElement getCloseStringInterpolation();
 
   @NotNull

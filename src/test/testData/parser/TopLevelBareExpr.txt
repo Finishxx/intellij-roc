@@ -1,0 +1,8 @@
+FILE
+  RocCallExprImpl(CALL_EXPR)
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('f')
+    PsiElement(NO_SPACE_LPAREN)('(')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('x')
+    PsiElement())(')')

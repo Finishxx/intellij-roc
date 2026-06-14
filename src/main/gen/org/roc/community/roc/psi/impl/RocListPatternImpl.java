@@ -93,10 +93,4 @@ public class RocListPatternImpl extends ASTWrapperPsiElement implements RocListP
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocUnderscorePattern.class);
   }
 
-  @Override
-  @NotNull
-  public List<RocVarPattern> getVarPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocVarPattern.class);
-  }
-
 }

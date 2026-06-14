@@ -1,0 +1,6 @@
+FILE
+  RocDbgExprImpl(DBG_EXPR)
+    PsiElement(dbg)('dbg')
+    PsiWhiteSpace(' ')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('y')

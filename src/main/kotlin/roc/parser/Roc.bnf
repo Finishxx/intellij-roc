@@ -129,31 +129,21 @@
 
 }
 
-// A Roc file is an optional header followed by top-level items.
-root ::= header? topLevelItem*
+root ::= header? statement*
 
-// TEMP: `throwaway` is the last-resort single-token mop-up from lexer bring-up;
-// it retires with M4 (expressions). The `typeAnno` root arm is GONE — real
-// type-declaration statements (below) now cover those inputs.
-private topLevelItem ::= statement | throwaway
+// `statement` (top level) and `blockStmt` (in a block) both mirror the reference's single parseStmt;
+// the top_level/in_body differences (import top-level-only, var in-body-only, type decls) are
+// later-phase context checks. The trailing `expr` is the final / bare-expression statement
+// (Parser.zig 2140) — a standalone `dbg y`, a tag, a call, etc. Each decl/anno arm rolls back when
+// its committing `=`/`:` is absent, so `expr` is reached only for a genuine bare expression.
+private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
 
-private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | valueDecl
-private throwaway ::=
-      LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
-    | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
-    | OP_COLON_EQUAL | OP_DOUBLE_COLON | OP_NOT_EQUALS | OP_BANG | OP_AMPERSAND
-    | OP_DOUBLE_QUESTION | OP_QUESTION | NO_SPACE_OP_QUESTION | OP_BAR | OP_PLUS
-    | OP_STAR | OP_DOUBLE_SLASH | OP_SLASH | OP_BACKSLASH | OP_PERCENT | OP_CARET
-    | OP_GREATER_THAN_OR_EQ | OP_GREATER_THAN | OP_LESS_THAN_OR_EQ | OP_BACK_ARROW
-    | OP_LESS_THAN | OP_BINARY_MINUS | OP_UNARY_MINUS
-    | DOT | DOUBLE_DOT | TRIPLE_DOT | DOT_STAR | DOT_INT | DOT_LOWER_IDENT
-    | DOT_UPPER_IDENT | NO_SPACE_DOT_INT | NO_SPACE_DOT_LOWER_IDENT
-    | NO_SPACE_DOT_UPPER_IDENT
-    | LOWER_IDENT | UPPER_IDENT | INT | FLOAT | SINGLE_QUOTE | UNDERSCORE
-    | NAMED_UNDERSCORE | OPAQUE_NAME
-    | STRING_START | STRING_END | STRING_PART | MULTILINE_STRING_START
-    | OPEN_STRING_INTERPOLATION | CLOSE_STRING_INTERPOLATION
-    | COMMENT
+// Lexer-only tokens — the lexer emits these but no rule consumes them yet: `COMMENT` is trivia
+// (RocParserDefinition.getCommentTokens), and multiline strings / opaque names / `\` are features
+// not yet grammared. This rule is NEVER reached from `root`; it exists only so Grammar-Kit keeps
+// generating their RocTypes constants (a no-text token is pruned unless some rule names it), which
+// the generated lexer and RocTokenSets.COMMENTS depend on. Drop an entry once a real rule adopts it.
+private lexerOnlyTokens ::= COMMENT | MULTILINE_STRING_START | OPAQUE_NAME | OP_BACKSLASH
 
 
 // == headers ================================================
@@ -180,7 +170,9 @@ packageEntry ::= LOWER_IDENT OP_COLON KW_PLATFORM? string
 
 string ::= STRING_START stringElement* STRING_END
 private stringElement ::= STRING_PART | stringInterpolation
-stringInterpolation ::= OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION // M1 stub: no inner expr yet
+// `${ expr }` — inner expr stops at CLOSE_STRING_INTERPOLATION (a distinct token, not RBRACE).
+// In a pattern-position string, interpolation is a later-phase reject, not a grammar concern.
+stringInterpolation ::= OPEN_STRING_INTERPOLATION expr CLOSE_STRING_INTERPOLATION
 
 // == imports ================================================
 // Two forms, dispatched on the token after `import`:
@@ -200,7 +192,9 @@ importExposing ::= KW_EXPOSING exposedList        // reuses the header's exposed
 private fileImport ::= string KW_AS LOWER_IDENT OP_COLON typeAnno
 
 // == type-declaration statements ============================
-valueAnnotation ::= (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
+// Optional leading `var` is the reference's is_var flag (Parser.zig 1878); `var x : T` lands here,
+// `x : T` without it. The `var` + plain-ident shape (not NAMED_UNDERSCORE) is a later-phase check.
+valueAnnotation ::= KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
 
 // `Name(a) : T` (alias) | `Name(a) := T` (nominal) | `Name(a) :: T` (opaque).
 
@@ -222,11 +216,15 @@ private whereClauseItem ::= whereMethod | whereAlias
 whereMethod ::= LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLON typeAnno
 whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
 
-// == declarations (TEMP pattern harness) ====================
-// Patterns aren't a top-level construct, so a destructuring value decl hosts them for
-// testing. The RHS is now a real (atoms-only) `expr`; this becomes the genuine
-// value/destructure decl at M4f, once `expr` is complete and keyword statements land.
+// == declarations ===========================================
+// Value / destructure declaration: `x = e`, `{a, b} = e`, `(x, y) = e` — the reference's `.decl`
+// (parseStmtByType 1907 / 1975 / 2111).
 valueDecl ::= patternNoAlts OP_ASSIGN expr
+
+// `var x = e` — dedicated mutable-binding statement (.var, Parser.zig 1891). `var` is NOT a pattern
+// in Roc (single ident only, 1868) — hence its own rule, not a patternPrimary. `var x : T` is a
+// flagged annotation (see valueAnnotation). In-body-only / single-ident limits are later-phase checks.
+varDecl ::= KW_VAR LOWER_IDENT OP_ASSIGN expr
 
 // == keyword statements =====================================
 // parseStmtByType (Parser.zig 1791-1906), shared by `statement` and `blockStmt`. Context limits
@@ -250,8 +248,7 @@ asPattern ::= patternPrimary KW_AS LOWER_IDENT
 
 // All first-sets are disjoint, so ordering is irrelevant and there is no
 // intra-primary backtracking.
-private patternPrimary ::= varPattern
-                         | underscorePattern
+private patternPrimary ::= underscorePattern
                          | identPattern
                          | tagPattern
                          | literalPattern
@@ -261,7 +258,6 @@ private patternPrimary ::= varPattern
                          | tuplePattern
 
 identPattern      ::= LOWER_IDENT | NAMED_UNDERSCORE   // both are `.ident` in Roc
-varPattern        ::= KW_VAR LOWER_IDENT               // mutable binder `var x`
 underscorePattern ::= UNDERSCORE                       // `_`
 literalPattern    ::= INT | FLOAT | SINGLE_QUOTE       // string literal reuses `string`
 
@@ -503,8 +499,8 @@ recordExprField ::= LOWER_IDENT (OP_COLON expr)?
 // predicate). `+` (non-empty) leaves `{}` to recordExpr, the reference's empty record.
 blockExpr ::= LBRACE blockStmt+ RBRACE
 
-// Private: the concrete node attaches directly under BLOCK_EXPR, like top-level `statement`.
-private blockStmt ::= keywordStmt | valueDecl | valueAnnotation | expr
+// Block form of `statement` (see its comment); the concrete node attaches directly under BLOCK_EXPR.
+private blockStmt ::= keywordStmt | valueAnnotation | varDecl | valueDecl | expr
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]

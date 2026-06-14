@@ -81,10 +81,4 @@ public class RocLambdaExprImpl extends RocExprImpl implements RocLambdaExpr {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocUnderscorePattern.class);
   }
 
-  @Override
-  @NotNull
-  public List<RocVarPattern> getVarPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocVarPattern.class);
-  }
-
 }

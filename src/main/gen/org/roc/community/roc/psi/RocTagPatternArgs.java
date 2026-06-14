@@ -38,9 +38,6 @@ public interface RocTagPatternArgs extends PsiElement {
   List<RocUnderscorePattern> getUnderscorePatternList();
 
   @NotNull
-  List<RocVarPattern> getVarPatternList();
-
-  @NotNull
   PsiElement getNoSpaceLparen();
 
 }

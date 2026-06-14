@@ -87,10 +87,4 @@ public class RocMatchBranchImpl extends ASTWrapperPsiElement implements RocMatch
     return findChildByClass(RocUnderscorePattern.class);
   }
 
-  @Override
-  @Nullable
-  public RocVarPattern getVarPattern() {
-    return findChildByClass(RocVarPattern.class);
-  }
-
 }

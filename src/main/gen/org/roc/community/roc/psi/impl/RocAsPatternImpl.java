@@ -76,12 +76,6 @@ public class RocAsPatternImpl extends ASTWrapperPsiElement implements RocAsPatte
   }
 
   @Override
-  @Nullable
-  public RocVarPattern getVarPattern() {
-    return findChildByClass(RocVarPattern.class);
-  }
-
-  @Override
   @NotNull
   public PsiElement getLowerIdent() {
     return findNotNullChildByType(LOWER_IDENT);

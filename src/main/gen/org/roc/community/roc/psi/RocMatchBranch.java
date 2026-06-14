@@ -37,7 +37,4 @@ public interface RocMatchBranch extends PsiElement {
   @Nullable
   RocUnderscorePattern getUnderscorePattern();
 
-  @Nullable
-  RocVarPattern getVarPattern();
-
 }

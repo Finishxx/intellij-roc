@@ -97,9 +97,6 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     fun testPatternIdent() = doTest(true)
 
     @Test
-    fun testPatternVar() = doTest(true)
-
-    @Test
     fun testPatternUnderscore() = doTest(true)
 
     @Test
@@ -322,6 +319,37 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testBlockKeywordStmts() = doTest(true)
+
+    // -- wiring: var / bare-expr / interpolation (M4f-wiring; see Roc.bnf) --
+
+    @Test
+    fun testStmtVar() = doTest(true)
+
+    @Test
+    fun testStmtVarAnno() = doTest(true)
+
+    @Test
+    fun testTopLevelDbg() = doTest(true)
+
+    @Test
+    fun testTopLevelBareExpr() = doTest(true)
+
+    @Test
+    fun testStringInterp() = doTest(true)
+
+    @Test
+    fun testStringInterpExpr() = doTest(true)
+
+    // -- comments: trivia-skipped by RocParserDefinition.getCommentTokens (no grammar rule) --
+
+    @Test
+    fun testCommentOnly() = doTest(true)
+
+    @Test
+    fun testCommentBetweenDecls() = doTest(true)
+
+    @Test
+    fun testCommentInBlock() = doTest(true)
 
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 

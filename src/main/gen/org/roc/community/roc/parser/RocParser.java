@@ -137,13 +137,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // keywordStmt | valueDecl | valueAnnotation | expr
+  // keywordStmt | valueAnnotation | varDecl | valueDecl | expr
   static boolean blockStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "blockStmt")) return false;
     boolean r;
     r = keywordStmt(b, l + 1);
-    if (!r) r = valueDecl(b, l + 1);
     if (!r) r = valueAnnotation(b, l + 1);
+    if (!r) r = varDecl(b, l + 1);
+    if (!r) r = valueDecl(b, l + 1);
     if (!r) r = expr(b, l + 1, -1);
     return r;
   }
@@ -555,6 +556,18 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // COMMENT | MULTILINE_STRING_START | OPAQUE_NAME | OP_BACKSLASH
+  static boolean lexerOnlyTokens(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lexerOnlyTokens")) return false;
+    boolean r;
+    r = consumeToken(b, COMMENT);
+    if (!r) r = consumeToken(b, MULTILINE_STRING_START);
+    if (!r) r = consumeToken(b, OPAQUE_NAME);
+    if (!r) r = consumeToken(b, OP_BACKSLASH);
+    return r;
+  }
+
+  /* ********************************************************** */
   // LBRACK (listPatternElem (COMMA listPatternElem)* COMMA?)? RBRACK
   public static boolean listPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "listPattern")) return false;
@@ -941,8 +954,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // varPattern
-  //                          | underscorePattern
+  // underscorePattern
   //                          | identPattern
   //                          | tagPattern
   //                          | literalPattern
@@ -953,8 +965,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   static boolean patternPrimary(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "patternPrimary")) return false;
     boolean r;
-    r = varPattern(b, l + 1);
-    if (!r) r = underscorePattern(b, l + 1);
+    r = underscorePattern(b, l + 1);
     if (!r) r = identPattern(b, l + 1);
     if (!r) r = tagPattern(b, l + 1);
     if (!r) r = literalPattern(b, l + 1);
@@ -1805,7 +1816,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // header? topLevelItem*
+  // header? statement*
   static boolean root(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root")) return false;
     boolean r;
@@ -1823,19 +1834,19 @@ public class RocParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // topLevelItem*
+  // statement*
   private static boolean root_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!topLevelItem(b, l + 1)) break;
+      if (!statement(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "root_1", c)) break;
     }
     return true;
   }
 
   /* ********************************************************** */
-  // importStatement | keywordStmt | valueAnnotation | typeDecl | valueDecl
+  // importStatement | keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
   static boolean statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statement")) return false;
     boolean r;
@@ -1843,7 +1854,9 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!r) r = keywordStmt(b, l + 1);
     if (!r) r = valueAnnotation(b, l + 1);
     if (!r) r = typeDecl(b, l + 1);
+    if (!r) r = varDecl(b, l + 1);
     if (!r) r = valueDecl(b, l + 1);
+    if (!r) r = expr(b, l + 1, -1);
     return r;
   }
 
@@ -1859,13 +1872,15 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // OPEN_STRING_INTERPOLATION CLOSE_STRING_INTERPOLATION
+  // OPEN_STRING_INTERPOLATION expr CLOSE_STRING_INTERPOLATION
   public static boolean stringInterpolation(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stringInterpolation")) return false;
     if (!nextTokenIs(b, OPEN_STRING_INTERPOLATION)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, OPEN_STRING_INTERPOLATION, CLOSE_STRING_INTERPOLATION);
+    r = consumeToken(b, OPEN_STRING_INTERPOLATION);
+    r = r && expr(b, l + 1, -1);
+    r = r && consumeToken(b, CLOSE_STRING_INTERPOLATION);
     exit_section_(b, m, STRING_INTERPOLATION, r);
     return r;
   }
@@ -2264,100 +2279,6 @@ public class RocParser implements PsiParser, LightPsiParser {
     boolean r;
     r = string(b, l + 1);
     if (!r) r = targetLinkType(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // LBRACE | RBRACE | LPAREN | NO_SPACE_LPAREN | RPAREN | LBRACK | RBRACK | COMMA
-  //     | OP_ARROW | OP_FAT_ARROW | OP_PIZZA | OP_ASSIGN | OP_EQUALS | OP_COLON
-  //     | OP_COLON_EQUAL | OP_DOUBLE_COLON | OP_NOT_EQUALS | OP_BANG | OP_AMPERSAND
-  //     | OP_DOUBLE_QUESTION | OP_QUESTION | NO_SPACE_OP_QUESTION | OP_BAR | OP_PLUS
-  //     | OP_STAR | OP_DOUBLE_SLASH | OP_SLASH | OP_BACKSLASH | OP_PERCENT | OP_CARET
-  //     | OP_GREATER_THAN_OR_EQ | OP_GREATER_THAN | OP_LESS_THAN_OR_EQ | OP_BACK_ARROW
-  //     | OP_LESS_THAN | OP_BINARY_MINUS | OP_UNARY_MINUS
-  //     | DOT | DOUBLE_DOT | TRIPLE_DOT | DOT_STAR | DOT_INT | DOT_LOWER_IDENT
-  //     | DOT_UPPER_IDENT | NO_SPACE_DOT_INT | NO_SPACE_DOT_LOWER_IDENT
-  //     | NO_SPACE_DOT_UPPER_IDENT
-  //     | LOWER_IDENT | UPPER_IDENT | INT | FLOAT | SINGLE_QUOTE | UNDERSCORE
-  //     | NAMED_UNDERSCORE | OPAQUE_NAME
-  //     | STRING_START | STRING_END | STRING_PART | MULTILINE_STRING_START
-  //     | OPEN_STRING_INTERPOLATION | CLOSE_STRING_INTERPOLATION
-  //     | COMMENT
-  static boolean throwaway(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "throwaway")) return false;
-    boolean r;
-    r = consumeToken(b, LBRACE);
-    if (!r) r = consumeToken(b, RBRACE);
-    if (!r) r = consumeToken(b, LPAREN);
-    if (!r) r = consumeToken(b, NO_SPACE_LPAREN);
-    if (!r) r = consumeToken(b, RPAREN);
-    if (!r) r = consumeToken(b, LBRACK);
-    if (!r) r = consumeToken(b, RBRACK);
-    if (!r) r = consumeToken(b, COMMA);
-    if (!r) r = consumeToken(b, OP_ARROW);
-    if (!r) r = consumeToken(b, OP_FAT_ARROW);
-    if (!r) r = consumeToken(b, OP_PIZZA);
-    if (!r) r = consumeToken(b, OP_ASSIGN);
-    if (!r) r = consumeToken(b, OP_EQUALS);
-    if (!r) r = consumeToken(b, OP_COLON);
-    if (!r) r = consumeToken(b, OP_COLON_EQUAL);
-    if (!r) r = consumeToken(b, OP_DOUBLE_COLON);
-    if (!r) r = consumeToken(b, OP_NOT_EQUALS);
-    if (!r) r = consumeToken(b, OP_BANG);
-    if (!r) r = consumeToken(b, OP_AMPERSAND);
-    if (!r) r = consumeToken(b, OP_DOUBLE_QUESTION);
-    if (!r) r = consumeToken(b, OP_QUESTION);
-    if (!r) r = consumeToken(b, NO_SPACE_OP_QUESTION);
-    if (!r) r = consumeToken(b, OP_BAR);
-    if (!r) r = consumeToken(b, OP_PLUS);
-    if (!r) r = consumeToken(b, OP_STAR);
-    if (!r) r = consumeToken(b, OP_DOUBLE_SLASH);
-    if (!r) r = consumeToken(b, OP_SLASH);
-    if (!r) r = consumeToken(b, OP_BACKSLASH);
-    if (!r) r = consumeToken(b, OP_PERCENT);
-    if (!r) r = consumeToken(b, OP_CARET);
-    if (!r) r = consumeToken(b, OP_GREATER_THAN_OR_EQ);
-    if (!r) r = consumeToken(b, OP_GREATER_THAN);
-    if (!r) r = consumeToken(b, OP_LESS_THAN_OR_EQ);
-    if (!r) r = consumeToken(b, OP_BACK_ARROW);
-    if (!r) r = consumeToken(b, OP_LESS_THAN);
-    if (!r) r = consumeToken(b, OP_BINARY_MINUS);
-    if (!r) r = consumeToken(b, OP_UNARY_MINUS);
-    if (!r) r = consumeToken(b, DOT);
-    if (!r) r = consumeToken(b, DOUBLE_DOT);
-    if (!r) r = consumeToken(b, TRIPLE_DOT);
-    if (!r) r = consumeToken(b, DOT_STAR);
-    if (!r) r = consumeToken(b, DOT_INT);
-    if (!r) r = consumeToken(b, DOT_LOWER_IDENT);
-    if (!r) r = consumeToken(b, DOT_UPPER_IDENT);
-    if (!r) r = consumeToken(b, NO_SPACE_DOT_INT);
-    if (!r) r = consumeToken(b, NO_SPACE_DOT_LOWER_IDENT);
-    if (!r) r = consumeToken(b, NO_SPACE_DOT_UPPER_IDENT);
-    if (!r) r = consumeToken(b, LOWER_IDENT);
-    if (!r) r = consumeToken(b, UPPER_IDENT);
-    if (!r) r = consumeToken(b, INT);
-    if (!r) r = consumeToken(b, FLOAT);
-    if (!r) r = consumeToken(b, SINGLE_QUOTE);
-    if (!r) r = consumeToken(b, UNDERSCORE);
-    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
-    if (!r) r = consumeToken(b, OPAQUE_NAME);
-    if (!r) r = consumeToken(b, STRING_START);
-    if (!r) r = consumeToken(b, STRING_END);
-    if (!r) r = consumeToken(b, STRING_PART);
-    if (!r) r = consumeToken(b, MULTILINE_STRING_START);
-    if (!r) r = consumeToken(b, OPEN_STRING_INTERPOLATION);
-    if (!r) r = consumeToken(b, CLOSE_STRING_INTERPOLATION);
-    if (!r) r = consumeToken(b, COMMENT);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // statement | throwaway
-  static boolean topLevelItem(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "topLevelItem")) return false;
-    boolean r;
-    r = statement(b, l + 1);
-    if (!r) r = throwaway(b, l + 1);
     return r;
   }
 
@@ -2811,23 +2732,30 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
+  // KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
   public static boolean valueAnnotation(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueAnnotation")) return false;
-    if (!nextTokenIs(b, "<value annotation>", LOWER_IDENT, NAMED_UNDERSCORE)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE_ANNOTATION, "<value annotation>");
     r = valueAnnotation_0(b, l + 1);
+    r = r && valueAnnotation_1(b, l + 1);
     r = r && consumeToken(b, OP_COLON);
     r = r && typeAnno(b, l + 1);
-    r = r && valueAnnotation_3(b, l + 1);
+    r = r && valueAnnotation_4(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // LOWER_IDENT | NAMED_UNDERSCORE
+  // KW_VAR?
   private static boolean valueAnnotation_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueAnnotation_0")) return false;
+    consumeToken(b, KW_VAR);
+    return true;
+  }
+
+  // LOWER_IDENT | NAMED_UNDERSCORE
+  private static boolean valueAnnotation_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "valueAnnotation_1")) return false;
     boolean r;
     r = consumeToken(b, LOWER_IDENT);
     if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
@@ -2835,8 +2763,8 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   // whereClause?
-  private static boolean valueAnnotation_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "valueAnnotation_3")) return false;
+  private static boolean valueAnnotation_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "valueAnnotation_4")) return false;
     whereClause(b, l + 1);
     return true;
   }
@@ -2855,14 +2783,15 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_VAR LOWER_IDENT
-  public static boolean varPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varPattern")) return false;
+  // KW_VAR LOWER_IDENT OP_ASSIGN expr
+  public static boolean varDecl(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varDecl")) return false;
     if (!nextTokenIs(b, KW_VAR)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, KW_VAR, LOWER_IDENT);
-    exit_section_(b, m, VAR_PATTERN, r);
+    r = consumeTokens(b, 0, KW_VAR, LOWER_IDENT, OP_ASSIGN);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, VAR_DECL, r);
     return r;
   }
 
