@@ -53,6 +53,18 @@ public class RocPlatformProvidesFieldImpl extends ASTWrapperPsiElement implement
 
   @Override
   @Nullable
+  public RocListExpr getListExpr() {
+    return findChildByClass(RocListExpr.class);
+  }
+
+  @Override
+  @Nullable
+  public RocRecordExpr getRecordExpr() {
+    return findChildByClass(RocRecordExpr.class);
+  }
+
+  @Override
+  @Nullable
   public RocString getString() {
     return findChildByClass(RocString.class);
   }
@@ -61,6 +73,12 @@ public class RocPlatformProvidesFieldImpl extends ASTWrapperPsiElement implement
   @Nullable
   public RocTagExpr getTagExpr() {
     return findChildByClass(RocTagExpr.class);
+  }
+
+  @Override
+  @Nullable
+  public RocTupleExpr getTupleExpr() {
+    return findChildByClass(RocTupleExpr.class);
   }
 
   @Override

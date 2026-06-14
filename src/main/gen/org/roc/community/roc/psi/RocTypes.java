@@ -26,6 +26,7 @@ public interface RocTypes {
   IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
   IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
   IElementType INT_LITERAL = new RocElementType("INT_LITERAL");
+  IElementType LIST_EXPR = new RocElementType("LIST_EXPR");
   IElementType LIST_PATTERN = new RocElementType("LIST_PATTERN");
   IElementType LIST_REST_PATTERN = new RocElementType("LIST_REST_PATTERN");
   IElementType LITERAL_PATTERN = new RocElementType("LITERAL_PATTERN");
@@ -40,6 +41,9 @@ public interface RocTypes {
   IElementType PLATFORM_REQUIRES = new RocElementType("PLATFORM_REQUIRES");
   IElementType PLATFORM_TARGETS = new RocElementType("PLATFORM_TARGETS");
   IElementType PROVIDES = new RocElementType("PROVIDES");
+  IElementType RECORD_EXPR = new RocElementType("RECORD_EXPR");
+  IElementType RECORD_EXPR_EXT = new RocElementType("RECORD_EXPR_EXT");
+  IElementType RECORD_EXPR_FIELD = new RocElementType("RECORD_EXPR_FIELD");
   IElementType RECORD_PATTERN = new RocElementType("RECORD_PATTERN");
   IElementType RECORD_PATTERN_FIELD = new RocElementType("RECORD_PATTERN_FIELD");
   IElementType RECORD_TYPE = new RocElementType("RECORD_TYPE");
@@ -60,6 +64,7 @@ public interface RocTypes {
   IElementType TARGET_FILE = new RocElementType("TARGET_FILE");
   IElementType TARGET_LINK_ENTRY = new RocElementType("TARGET_LINK_ENTRY");
   IElementType TARGET_LINK_TYPE = new RocElementType("TARGET_LINK_TYPE");
+  IElementType TUPLE_EXPR = new RocElementType("TUPLE_EXPR");
   IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
   IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
@@ -230,6 +235,9 @@ public interface RocTypes {
       else if (type == INT_LITERAL) {
         return new RocIntLiteralImpl(node);
       }
+      else if (type == LIST_EXPR) {
+        return new RocListExprImpl(node);
+      }
       else if (type == LIST_PATTERN) {
         return new RocListPatternImpl(node);
       }
@@ -271,6 +279,15 @@ public interface RocTypes {
       }
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);
+      }
+      else if (type == RECORD_EXPR) {
+        return new RocRecordExprImpl(node);
+      }
+      else if (type == RECORD_EXPR_EXT) {
+        return new RocRecordExprExtImpl(node);
+      }
+      else if (type == RECORD_EXPR_FIELD) {
+        return new RocRecordExprFieldImpl(node);
       }
       else if (type == RECORD_PATTERN) {
         return new RocRecordPatternImpl(node);
@@ -331,6 +348,9 @@ public interface RocTypes {
       }
       else if (type == TARGET_LINK_TYPE) {
         return new RocTargetLinkTypeImpl(node);
+      }
+      else if (type == TUPLE_EXPR) {
+        return new RocTupleExprImpl(node);
       }
       else if (type == TUPLE_PATTERN) {
         return new RocTuplePatternImpl(node);

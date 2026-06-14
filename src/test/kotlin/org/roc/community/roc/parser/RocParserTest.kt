@@ -144,6 +144,35 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprTag() = doTest(true)
 
+    // -- collection expressions (M4b, hosted by the destructuring decl; see Roc.bnf) --
+
+    @Test
+    fun testExprListEmpty() = doTest(true)
+
+    @Test
+    fun testExprList() = doTest(true)
+
+    @Test
+    fun testExprTuple() = doTest(true)
+
+    @Test
+    fun testExprParenSingle() = doTest(true)
+
+    @Test
+    fun testExprRecordEmpty() = doTest(true)
+
+    @Test
+    fun testExprRecord() = doTest(true)
+
+    @Test
+    fun testExprRecordShorthand() = doTest(true)
+
+    @Test
+    fun testExprRecordUpdate() = doTest(true)
+
+    @Test
+    fun testExprNested() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

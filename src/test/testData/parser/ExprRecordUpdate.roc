@@ -1,0 +1,1 @@
+x = { ..base, count: 1 }

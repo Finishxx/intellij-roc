@@ -1,0 +1,1 @@
+x = { name: "Bob", age: 42 }

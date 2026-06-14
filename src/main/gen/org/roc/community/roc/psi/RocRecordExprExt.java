@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocPlatformProvidesField extends PsiElement {
+public interface RocRecordExprExt extends PsiElement {
 
   @Nullable
   RocCharLiteral getCharLiteral();
@@ -33,8 +33,5 @@ public interface RocPlatformProvidesField extends PsiElement {
 
   @Nullable
   RocTupleExpr getTupleExpr();
-
-  @NotNull
-  PsiElement getLowerIdent();
 
 }

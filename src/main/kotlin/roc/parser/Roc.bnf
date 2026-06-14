@@ -328,6 +328,7 @@ inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 // == expressions (M4) =======================================
 // parseExprWithBp in the Zig reference. Dispatch-only like `typeAnno` (no wrapper node).
 private expr ::= intLiteral | floatLiteral | charLiteral | string | identExpr | tagExpr
+               | listExpr | tupleExpr | recordExpr
 
 // Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
 // — keeps later type-inference/inspections a direct match. Multiline + typed suffixes later.
@@ -339,6 +340,21 @@ identExpr ::= LOWER_IDENT | NAMED_UNDERSCORE
 // No qualification here: the reference only chains upper-start names, and dotted access is
 // itself a suffix — both land in M4c.
 tagExpr   ::= UPPER_IDENT
+
+listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
+
+// A single `(a)` is built as a 1-tuple, not a grouping node — faithful to parseExprWithBp
+// (`// TODO: Parenthesized expressions`) and consistent with tuplePattern.
+tupleExpr ::= (NO_SPACE_LPAREN | LPAREN) (expr (COMMA expr)* COMMA?)? RPAREN
+
+// `{` is record-ONLY here; the record-vs-block disambiguation arrives with blocks (M4e).
+// Unlike record TYPE/PATTERN, the update extension is a PREFIX (ext first), per the
+// `.OpenCurly` arm of parseExprWithBp.
+recordExpr ::= LBRACE recordExprBody? RBRACE
+private recordExprBody ::= recordExprExt COMMA (recordExprField (COMMA recordExprField)* COMMA?)?
+                         | recordExprField (COMMA recordExprField)* COMMA?
+recordExprExt   ::= DOUBLE_DOT expr
+recordExprField ::= LOWER_IDENT (OP_COLON expr)?
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]
