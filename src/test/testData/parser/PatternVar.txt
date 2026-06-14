@@ -7,4 +7,5 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    PsiElement(INT)('0')
+    RocIntLiteralImpl(INT_LITERAL)
+      PsiElement(INT)('0')

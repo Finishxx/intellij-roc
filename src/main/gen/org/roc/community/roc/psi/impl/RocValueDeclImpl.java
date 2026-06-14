@@ -35,8 +35,32 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
 
   @Override
   @Nullable
+  public RocCharLiteral getCharLiteral() {
+    return findChildByClass(RocCharLiteral.class);
+  }
+
+  @Override
+  @Nullable
+  public RocFloatLiteral getFloatLiteral() {
+    return findChildByClass(RocFloatLiteral.class);
+  }
+
+  @Override
+  @Nullable
+  public RocIdentExpr getIdentExpr() {
+    return findChildByClass(RocIdentExpr.class);
+  }
+
+  @Override
+  @Nullable
   public RocIdentPattern getIdentPattern() {
     return findChildByClass(RocIdentPattern.class);
+  }
+
+  @Override
+  @Nullable
+  public RocIntLiteral getIntLiteral() {
+    return findChildByClass(RocIntLiteral.class);
   }
 
   @Override
@@ -65,6 +89,12 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
 
   @Override
   @Nullable
+  public RocTagExpr getTagExpr() {
+    return findChildByClass(RocTagExpr.class);
+  }
+
+  @Override
+  @Nullable
   public RocTagPattern getTagPattern() {
     return findChildByClass(RocTagPattern.class);
   }
@@ -85,30 +115,6 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
   @Nullable
   public RocVarPattern getVarPattern() {
     return findChildByClass(RocVarPattern.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getFloat() {
-    return findChildByType(FLOAT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLowerIdent() {
-    return findChildByType(LOWER_IDENT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getUpperIdent() {
-    return findChildByType(UPPER_IDENT);
   }
 
 }

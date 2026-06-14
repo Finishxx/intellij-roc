@@ -218,11 +218,10 @@ whereMethod ::= LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLO
 whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
 
 // == declarations (TEMP pattern harness) ====================
-// Patterns aren't a top-level construct, so a destructuring value decl hosts them
-// for testing. `exprStub` is atoms-only scaffolding until M4 (expressions) lands a
-// real `expr`; at that point this becomes the genuine value/destructure decl.
-valueDecl ::= patternNoAlts OP_ASSIGN exprStub
-private exprStub ::= INT | FLOAT | LOWER_IDENT | UPPER_IDENT | string
+// Patterns aren't a top-level construct, so a destructuring value decl hosts them for
+// testing. The RHS is now a real (atoms-only) `expr`; this becomes the genuine
+// value/destructure decl at M4f, once `expr` is complete and keyword statements land.
+valueDecl ::= patternNoAlts OP_ASSIGN expr
 
 // == patterns ===============================================
 private pattern       ::= alternativesPattern | asPattern | patternPrimary
@@ -326,6 +325,21 @@ tagUnionExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
 inferredType    ::= UNDERSCORE        // _
 inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 
+// == expressions (M4) =======================================
+// parseExprWithBp in the Zig reference. Dispatch-only like `typeAnno` (no wrapper node).
+private expr ::= intLiteral | floatLiteral | charLiteral | string | identExpr | tagExpr
+
+// Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
+// — keeps later type-inference/inspections a direct match. Multiline + typed suffixes later.
+intLiteral   ::= INT
+floatLiteral ::= FLOAT
+charLiteral  ::= SINGLE_QUOTE
+
+identExpr ::= LOWER_IDENT | NAMED_UNDERSCORE
+// No qualification here: the reference only chains upper-start names, and dotted access is
+// itself a suffix — both land in M4c.
+tagExpr   ::= UPPER_IDENT
+
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]
 platformHeader ::= KW_PLATFORM string
@@ -343,11 +357,10 @@ requiresEntry     ::= requiresForClause? LOWER_IDENT OP_COLON typeAnno
 requiresForClause ::= LBRACK requiresForAlias (COMMA requiresForAlias)* RBRACK KW_FOR
 requiresForAlias  ::= UPPER_IDENT OP_COLON LOWER_IDENT
 
-// `provides { name: <expr>, … }` — record-style, unlike the app header's `[ … ]`
-// provides. Values are expressions (always a string path in practice); `exprStub`
-// is the shared M4 placeholder.
+// `provides { name: <expr>, … }` — record-style, unlike the app header's `[ … ]` provides.
+// Values are expressions (a string path in practice).
 platformProvides      ::= LBRACE (platformProvidesField (COMMA platformProvidesField)* COMMA?)? RBRACE
-platformProvidesField ::= LOWER_IDENT (OP_COLON exprStub)?
+platformProvidesField ::= LOWER_IDENT (OP_COLON expr)?
 
 // optional `targets: { files: "…", exe: { x64mac: ["libhost.a", app], … }, … }`.
 // A target field's value is a string (files path) or a link-type block; a link

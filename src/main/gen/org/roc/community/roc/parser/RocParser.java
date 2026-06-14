@@ -100,6 +100,18 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // SINGLE_QUOTE
+  public static boolean charLiteral(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "charLiteral")) return false;
+    if (!nextTokenIs(b, SINGLE_QUOTE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, SINGLE_QUOTE);
+    exit_section_(b, m, CHAR_LITERAL, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // LOWER_IDENT (KW_AS LOWER_IDENT)?
   //               | UPPER_IDENT (KW_AS UPPER_IDENT | DOT_STAR)?
   public static boolean exposedItem(PsiBuilder b, int l) {
@@ -245,15 +257,16 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // INT | FLOAT | LOWER_IDENT | UPPER_IDENT | string
-  static boolean exprStub(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exprStub")) return false;
+  // intLiteral | floatLiteral | charLiteral | string | identExpr | tagExpr
+  static boolean expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expr")) return false;
     boolean r;
-    r = consumeToken(b, INT);
-    if (!r) r = consumeToken(b, FLOAT);
-    if (!r) r = consumeToken(b, LOWER_IDENT);
-    if (!r) r = consumeToken(b, UPPER_IDENT);
+    r = intLiteral(b, l + 1);
+    if (!r) r = floatLiteral(b, l + 1);
+    if (!r) r = charLiteral(b, l + 1);
     if (!r) r = string(b, l + 1);
+    if (!r) r = identExpr(b, l + 1);
+    if (!r) r = tagExpr(b, l + 1);
     return r;
   }
 
@@ -268,6 +281,18 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = r && consumeTokens(b, 0, KW_AS, LOWER_IDENT, OP_COLON);
     r = r && typeAnno(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // FLOAT
+  public static boolean floatLiteral(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "floatLiteral")) return false;
+    if (!nextTokenIs(b, FLOAT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, FLOAT);
+    exit_section_(b, m, FLOAT_LITERAL, r);
     return r;
   }
 
@@ -318,6 +343,19 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, KW_HOSTED);
     r = r && exposes(b, l + 1);
     exit_section_(b, m, HOSTED_HEADER, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LOWER_IDENT | NAMED_UNDERSCORE
+  public static boolean identExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "identExpr")) return false;
+    if (!nextTokenIs(b, "<ident expr>", LOWER_IDENT, NAMED_UNDERSCORE)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, IDENT_EXPR, "<ident expr>");
+    r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -402,6 +440,18 @@ public class RocParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, NAMED_UNDERSCORE);
     exit_section_(b, m, INFERRED_TYPE_VAR, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // INT
+  public static boolean intLiteral(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "intLiteral")) return false;
+    if (!nextTokenIs(b, INT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, INT);
+    exit_section_(b, m, INT_LITERAL, r);
     return r;
   }
 
@@ -881,7 +931,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LOWER_IDENT (OP_COLON exprStub)?
+  // LOWER_IDENT (OP_COLON expr)?
   public static boolean platformProvidesField(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "platformProvidesField")) return false;
     if (!nextTokenIs(b, LOWER_IDENT)) return false;
@@ -893,20 +943,20 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (OP_COLON exprStub)?
+  // (OP_COLON expr)?
   private static boolean platformProvidesField_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "platformProvidesField_1")) return false;
     platformProvidesField_1_0(b, l + 1);
     return true;
   }
 
-  // OP_COLON exprStub
+  // OP_COLON expr
   private static boolean platformProvidesField_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "platformProvidesField_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, OP_COLON);
-    r = r && exprStub(b, l + 1);
+    r = r && expr(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1527,6 +1577,18 @@ public class RocParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, OPEN_STRING_INTERPOLATION, CLOSE_STRING_INTERPOLATION);
     exit_section_(b, m, STRING_INTERPOLATION, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // UPPER_IDENT
+  public static boolean tagExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagExpr")) return false;
+    if (!nextTokenIs(b, UPPER_IDENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, UPPER_IDENT);
+    exit_section_(b, m, TAG_EXPR, r);
     return r;
   }
 
@@ -2502,14 +2564,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // patternNoAlts OP_ASSIGN exprStub
+  // patternNoAlts OP_ASSIGN expr
   public static boolean valueDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueDecl")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE_DECL, "<value decl>");
     r = patternNoAlts(b, l + 1);
     r = r && consumeToken(b, OP_ASSIGN);
-    r = r && exprStub(b, l + 1);
+    r = r && expr(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

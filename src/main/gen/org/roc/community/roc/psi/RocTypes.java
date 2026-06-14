@@ -11,17 +11,21 @@ public interface RocTypes {
   IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
+  IElementType CHAR_LITERAL = new RocElementType("CHAR_LITERAL");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
+  IElementType FLOAT_LITERAL = new RocElementType("FLOAT_LITERAL");
   IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
   IElementType HOSTED_HEADER = new RocElementType("HOSTED_HEADER");
+  IElementType IDENT_EXPR = new RocElementType("IDENT_EXPR");
   IElementType IDENT_PATTERN = new RocElementType("IDENT_PATTERN");
   IElementType IMPORT_ALIAS = new RocElementType("IMPORT_ALIAS");
   IElementType IMPORT_EXPOSING = new RocElementType("IMPORT_EXPOSING");
   IElementType IMPORT_STATEMENT = new RocElementType("IMPORT_STATEMENT");
   IElementType INFERRED_TYPE = new RocElementType("INFERRED_TYPE");
   IElementType INFERRED_TYPE_VAR = new RocElementType("INFERRED_TYPE_VAR");
+  IElementType INT_LITERAL = new RocElementType("INT_LITERAL");
   IElementType LIST_PATTERN = new RocElementType("LIST_PATTERN");
   IElementType LIST_REST_PATTERN = new RocElementType("LIST_REST_PATTERN");
   IElementType LITERAL_PATTERN = new RocElementType("LITERAL_PATTERN");
@@ -46,6 +50,7 @@ public interface RocTypes {
   IElementType REQUIRES_FOR_CLAUSE = new RocElementType("REQUIRES_FOR_CLAUSE");
   IElementType STRING = new RocElementType("STRING");
   IElementType STRING_INTERPOLATION = new RocElementType("STRING_INTERPOLATION");
+  IElementType TAG_EXPR = new RocElementType("TAG_EXPR");
   IElementType TAG_PATTERN = new RocElementType("TAG_PATTERN");
   IElementType TAG_PATTERN_ARGS = new RocElementType("TAG_PATTERN_ARGS");
   IElementType TAG_UNION_EXT = new RocElementType("TAG_UNION_EXT");
@@ -180,11 +185,17 @@ public interface RocTypes {
       else if (type == AS_PATTERN) {
         return new RocAsPatternImpl(node);
       }
+      else if (type == CHAR_LITERAL) {
+        return new RocCharLiteralImpl(node);
+      }
       else if (type == EXPOSED_ITEM) {
         return new RocExposedItemImpl(node);
       }
       else if (type == EXPOSES) {
         return new RocExposesImpl(node);
+      }
+      else if (type == FLOAT_LITERAL) {
+        return new RocFloatLiteralImpl(node);
       }
       else if (type == FUNCTION_TYPE) {
         return new RocFunctionTypeImpl(node);
@@ -194,6 +205,9 @@ public interface RocTypes {
       }
       else if (type == HOSTED_HEADER) {
         return new RocHostedHeaderImpl(node);
+      }
+      else if (type == IDENT_EXPR) {
+        return new RocIdentExprImpl(node);
       }
       else if (type == IDENT_PATTERN) {
         return new RocIdentPatternImpl(node);
@@ -212,6 +226,9 @@ public interface RocTypes {
       }
       else if (type == INFERRED_TYPE_VAR) {
         return new RocInferredTypeVarImpl(node);
+      }
+      else if (type == INT_LITERAL) {
+        return new RocIntLiteralImpl(node);
       }
       else if (type == LIST_PATTERN) {
         return new RocListPatternImpl(node);
@@ -284,6 +301,9 @@ public interface RocTypes {
       }
       else if (type == STRING_INTERPOLATION) {
         return new RocStringInterpolationImpl(node);
+      }
+      else if (type == TAG_EXPR) {
+        return new RocTagExprImpl(node);
       }
       else if (type == TAG_PATTERN) {
         return new RocTagPatternImpl(node);

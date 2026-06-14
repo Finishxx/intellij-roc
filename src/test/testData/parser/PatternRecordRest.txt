@@ -15,4 +15,5 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    PsiElement(LOWER_IDENT)('record')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('record')

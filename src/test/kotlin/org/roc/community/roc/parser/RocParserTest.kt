@@ -124,6 +124,26 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testPatternAlternatives() = doTest(true)
 
+    // -- expression atoms (M4a, hosted by the destructuring decl; see Roc.bnf) --
+
+    @Test
+    fun testExprInt() = doTest(true)
+
+    @Test
+    fun testExprFloat() = doTest(true)
+
+    @Test
+    fun testExprString() = doTest(true)
+
+    @Test
+    fun testExprChar() = doTest(true)
+
+    @Test
+    fun testExprIdent() = doTest(true)
+
+    @Test
+    fun testExprTag() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

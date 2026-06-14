@@ -8,15 +8,24 @@ import com.intellij.psi.PsiElement;
 public interface RocPlatformProvidesField extends PsiElement {
 
   @Nullable
+  RocCharLiteral getCharLiteral();
+
+  @Nullable
+  RocFloatLiteral getFloatLiteral();
+
+  @Nullable
+  RocIdentExpr getIdentExpr();
+
+  @Nullable
+  RocIntLiteral getIntLiteral();
+
+  @Nullable
   RocString getString();
 
   @Nullable
-  PsiElement getFloat();
+  RocTagExpr getTagExpr();
 
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getUpperIdent();
+  @NotNull
+  PsiElement getLowerIdent();
 
 }

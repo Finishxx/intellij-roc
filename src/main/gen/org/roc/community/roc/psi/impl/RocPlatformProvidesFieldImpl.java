@@ -29,26 +29,44 @@ public class RocPlatformProvidesFieldImpl extends ASTWrapperPsiElement implement
 
   @Override
   @Nullable
+  public RocCharLiteral getCharLiteral() {
+    return findChildByClass(RocCharLiteral.class);
+  }
+
+  @Override
+  @Nullable
+  public RocFloatLiteral getFloatLiteral() {
+    return findChildByClass(RocFloatLiteral.class);
+  }
+
+  @Override
+  @Nullable
+  public RocIdentExpr getIdentExpr() {
+    return findChildByClass(RocIdentExpr.class);
+  }
+
+  @Override
+  @Nullable
+  public RocIntLiteral getIntLiteral() {
+    return findChildByClass(RocIntLiteral.class);
+  }
+
+  @Override
+  @Nullable
   public RocString getString() {
     return findChildByClass(RocString.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getFloat() {
-    return findChildByType(FLOAT);
+  public RocTagExpr getTagExpr() {
+    return findChildByClass(RocTagExpr.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getUpperIdent() {
-    return findChildByType(UPPER_IDENT);
+  @NotNull
+  public PsiElement getLowerIdent() {
+    return findNotNullChildByType(LOWER_IDENT);
   }
 
 }

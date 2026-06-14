@@ -5,5 +5,5 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RocIntLiteralImpl(INT_LITERAL)
-      PsiElement(INT)('5')
+    RocIdentExprImpl(IDENT_EXPR)
+      PsiElement(LOWER_IDENT)('foo')
