@@ -10,6 +10,7 @@ public interface RocTypes {
 
   IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
+  IElementType ARROW_CALL_EXPR = new RocElementType("ARROW_CALL_EXPR");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
   IElementType BINARY_EXPR = new RocElementType("BINARY_EXPR");
   IElementType BLOCK_EXPR = new RocElementType("BLOCK_EXPR");
@@ -48,6 +49,7 @@ public interface RocTypes {
   IElementType METHOD_CALL_EXPR = new RocElementType("METHOD_CALL_EXPR");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType MODULE_NAME = new RocElementType("MODULE_NAME");
+  IElementType MULTILINE_STRING_EXPR = new RocElementType("MULTILINE_STRING_EXPR");
   IElementType PACKAGES = new RocElementType("PACKAGES");
   IElementType PACKAGE_ENTRY = new RocElementType("PACKAGE_ENTRY");
   IElementType PACKAGE_HEADER = new RocElementType("PACKAGE_HEADER");
@@ -209,6 +211,9 @@ public interface RocTypes {
       else if (type == APP_HEADER) {
         return new RocAppHeaderImpl(node);
       }
+      else if (type == ARROW_CALL_EXPR) {
+        return new RocArrowCallExprImpl(node);
+      }
       else if (type == AS_PATTERN) {
         return new RocAsPatternImpl(node);
       }
@@ -319,6 +324,9 @@ public interface RocTypes {
       }
       else if (type == MODULE_NAME) {
         return new RocModuleNameImpl(node);
+      }
+      else if (type == MULTILINE_STRING_EXPR) {
+        return new RocMultilineStringExprImpl(node);
       }
       else if (type == PACKAGES) {
         return new RocPackagesImpl(node);

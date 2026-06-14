@@ -15,6 +15,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitArrowCallExpr(@NotNull RocArrowCallExpr o) {
+    visitExpr(o);
+  }
+
   public void visitAsPattern(@NotNull RocAsPattern o) {
     visitPsiElement(o);
   }
@@ -165,6 +169,10 @@ public class RocVisitor extends PsiElementVisitor {
 
   public void visitModuleName(@NotNull RocModuleName o) {
     visitPsiElement(o);
+  }
+
+  public void visitMultilineStringExpr(@NotNull RocMultilineStringExpr o) {
+    visitExpr(o);
   }
 
   public void visitPackageEntry(@NotNull RocPackageEntry o) {

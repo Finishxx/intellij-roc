@@ -1,0 +1,10 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocIdentPatternImpl(IDENT_PATTERN)
+      PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RocMultilineStringExprImpl(MULTILINE_STRING_EXPR)
+      PsiElement(MULTILINE_STRING_START)('\\')
+      PsiElement(STRING_PART)('hello')

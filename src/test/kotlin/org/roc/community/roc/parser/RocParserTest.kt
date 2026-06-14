@@ -351,6 +351,32 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testCommentInBlock() = doTest(true)
 
+    // -- remaining syntax: multiline strings + arrow-call (M5; see Roc.bnf) --
+
+    @Test
+    fun testExprMultiline() = doTest(true)
+
+    @Test
+    fun testExprMultilineStitch() = doTest(true)
+
+    @Test
+    fun testExprMultilineInterp() = doTest(true)
+
+    @Test
+    fun testExprMultilineTriple() = doTest(true)
+
+    @Test
+    fun testExprArrowCall() = doTest(true)
+
+    @Test
+    fun testExprArrowChain() = doTest(true)
+
+    @Test
+    fun testExprArrowTag() = doTest(true)
+
+    @Test
+    fun testExprArrowParen() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

@@ -138,12 +138,14 @@ root ::= header? statement*
 // its committing `=`/`:` is absent, so `expr` is reached only for a genuine bare expression.
 private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
 
-// Lexer-only tokens — the lexer emits these but no rule consumes them yet: `COMMENT` is trivia
-// (RocParserDefinition.getCommentTokens), and multiline strings / opaque names / `\` are features
-// not yet grammared. This rule is NEVER reached from `root`; it exists only so Grammar-Kit keeps
-// generating their RocTypes constants (a no-text token is pruned unless some rule names it), which
-// the generated lexer and RocTokenSets.COMMENTS depend on. Drop an entry once a real rule adopts it.
-private lexerOnlyTokens ::= COMMENT | MULTILINE_STRING_START | OPAQUE_NAME | OP_BACKSLASH
+// Lexer-only tokens — the lexer emits these but no rule consumes them: `COMMENT` is trivia
+// (RocParserDefinition.getCommentTokens); `@`-opaque names and a lone `\` are tokenizer-only in the
+// reference TOO (Parser.zig never reads OpaqueName/OpBackslash — they'd be malformed there), so a
+// rule would invent syntax. This rule is NEVER reached from `root`; it exists only so Grammar-Kit
+// keeps generating their RocTypes constants (a no-text token is pruned unless some rule names it),
+// which the generated lexer and RocTokenSets.COMMENTS depend on. (MULTILINE_STRING_START dropped from
+// this list in M5 — now anchored by the real multilineStringExpr rule.)
+private lexerOnlyTokens ::= COMMENT | OPAQUE_NAME | OP_BACKSLASH
 
 
 // == headers ================================================
@@ -173,6 +175,13 @@ private stringElement ::= STRING_PART | stringInterpolation
 // `${ expr }` — inner expr stops at CLOSE_STRING_INTERPOLATION (a distinct token, not RBRACE).
 // In a pattern-position string, interpolation is a later-phase reject, not a grammar concern.
 stringInterpolation ::= OPEN_STRING_INTERPOLATION expr CLOSE_STRING_INTERPOLATION
+
+// Line-oriented multiline string (Parser.zig parseMultiLineStringExpr 3437). One MULTILINE_STRING_START
+// per line — from `"""` or the Zig-style `\\` prefix — with no close token; the EOL between lines is
+// whitespace trivia, so consecutive line-starts stitch into one node here. Named *Expr to join the
+// expression engine; expr-only (multiline-in-pattern is a later-phase reject, like interpolation).
+multilineStringExpr ::= MULTILINE_STRING_START multilineStringPart*
+private multilineStringPart ::= STRING_PART | stringInterpolation | MULTILINE_STRING_START
 
 // == imports ================================================
 // Two forms, dispatched on the token after `import`:
@@ -359,8 +368,9 @@ expr ::= orExpr
        | methodCallExpr
        | fieldAccessExpr
        | tupleAccessExpr
+       | arrowCallExpr        // postfix `->` arrow-call (M5)
        | questionSuffixExpr   // postfix `?` (NO_SPACE_OP_QUESTION)
-       | intLiteral | floatLiteral | charLiteral | string
+       | intLiteral | floatLiteral | charLiteral | string | multilineStringExpr
        | qualifiedNameExpr | tagExpr | identExpr
        | ellipsisExpr         // `...`
        | ifExpr | matchExpr | forExpr | lambdaExpr | dbgExpr   // control flow (M4e/M4f)
@@ -412,6 +422,13 @@ tupleAccessExpr ::= expr (NO_SPACE_DOT_INT | DOT_INT)
 // Postfix `?` (try-propagation) — the NO-space token; suffix tier, left-recursive like the
 // access suffixes above. Distinct from the spaced binary `?`/`??` (OP_QUESTION/OP_DOUBLE_QUESTION).
 questionSuffixExpr ::= expr NO_SPACE_OP_QUESTION
+// UFCS static-dispatch arrow `recv->method(args)` / `recv->Tag` / `recv->(|x| body)(extra)`. A
+// postfix in the reference's dot-loop (Parser.zig 3146), tightest tier, left-assoc. The target is a
+// name or paren-expr plus zero+ call-arg applications (parseExprApplicationSuffix 3188), NOT a full
+// binary expr — so `a->b + c` is `(a->b) + c`. Reusing engine primaries from this private rule works
+// the same way patternPrimary reuses `string`. RHS-must-be-callable is a later-phase check.
+arrowCallExpr ::= expr OP_ARROW arrowCallTarget
+private arrowCallTarget ::= (qualifiedNameExpr | tagExpr | identExpr | tupleExpr) callArgs*
 private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
 
 // Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
