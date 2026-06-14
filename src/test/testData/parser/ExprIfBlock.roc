@@ -1,0 +1,1 @@
+x = if c { a = 1 a } else b

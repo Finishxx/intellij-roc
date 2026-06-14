@@ -36,12 +36,12 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
-    create_token_set_(BINARY_EXPR, CALL_EXPR, CHAR_LITERAL, ELLIPSIS_EXPR,
-      EXPR, FIELD_ACCESS_EXPR, FLOAT_LITERAL, FOR_EXPR,
-      IDENT_EXPR, IF_EXPR, INT_LITERAL, LAMBDA_EXPR,
-      LIST_EXPR, MATCH_EXPR, METHOD_CALL_EXPR, QUALIFIED_NAME_EXPR,
-      QUESTION_SUFFIX_EXPR, RECORD_EXPR, STRING, TAG_EXPR,
-      TUPLE_ACCESS_EXPR, TUPLE_EXPR, UNARY_EXPR),
+    create_token_set_(BINARY_EXPR, BLOCK_EXPR, CALL_EXPR, CHAR_LITERAL,
+      ELLIPSIS_EXPR, EXPR, FIELD_ACCESS_EXPR, FLOAT_LITERAL,
+      FOR_EXPR, IDENT_EXPR, IF_EXPR, INT_LITERAL,
+      LAMBDA_EXPR, LIST_EXPR, MATCH_EXPR, METHOD_CALL_EXPR,
+      QUALIFIED_NAME_EXPR, QUESTION_SUFFIX_EXPR, RECORD_EXPR, STRING,
+      TAG_EXPR, TUPLE_ACCESS_EXPR, TUPLE_EXPR, UNARY_EXPR),
   };
 
   /* ********************************************************** */
@@ -132,6 +132,17 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, OP_GREATER_THAN_OR_EQ);
     if (!r) r = consumeToken(b, KW_AND);
     if (!r) r = consumeToken(b, KW_OR);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // valueDecl | valueAnnotation | expr
+  static boolean blockStmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "blockStmt")) return false;
+    boolean r;
+    r = valueDecl(b, l + 1);
+    if (!r) r = valueAnnotation(b, l + 1);
+    if (!r) r = expr(b, l + 1, -1);
     return r;
   }
 
@@ -2924,6 +2935,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   // 28: ATOM(listExpr)
   // 29: ATOM(tupleExpr)
   // 30: ATOM(recordExpr)
+  // 31: ATOM(blockExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2945,6 +2957,7 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!r) r = listExpr(b, l + 1);
     if (!r) r = tupleExpr(b, l + 1);
     if (!r) r = recordExpr(b, l + 1);
+    if (!r) r = blockExpr(b, l + 1);
     p = r;
     r = r && expr_0(b, l + 1, g);
     exit_section_(b, l, m, null, r, p, null);
@@ -3545,6 +3558,34 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "recordExpr_1")) return false;
     recordExprBody(b, l + 1);
     return true;
+  }
+
+  // LBRACE blockStmt+ RBRACE
+  public static boolean blockExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "blockExpr")) return false;
+    if (!nextTokenIsSmart(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, LBRACE);
+    r = r && blockExpr_1(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, BLOCK_EXPR, r);
+    return r;
+  }
+
+  // blockStmt+
+  private static boolean blockExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "blockExpr_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = blockStmt(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!blockStmt(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "blockExpr_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
 }

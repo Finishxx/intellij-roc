@@ -277,6 +277,29 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprIfMatch() = doTest(true)
 
+    // -- blocks: { stmts } + record-vs-block disambiguation (M4e-blocks; see Roc.bnf) --
+
+    @Test
+    fun testExprBlock() = doTest(true)
+
+    @Test
+    fun testExprBlockMulti() = doTest(true)
+
+    @Test
+    fun testExprBlockAnno() = doTest(true)
+
+    @Test
+    fun testExprBlockBareIdent() = doTest(true)
+
+    @Test
+    fun testExprRecordAmbiguous() = doTest(true)
+
+    @Test
+    fun testExprNestedBlock() = doTest(true)
+
+    @Test
+    fun testExprIfBlock() = doTest(true)
+
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
     @Test

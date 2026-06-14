@@ -12,6 +12,7 @@ public interface RocTypes {
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
   IElementType BINARY_EXPR = new RocElementType("BINARY_EXPR");
+  IElementType BLOCK_EXPR = new RocElementType("BLOCK_EXPR");
   IElementType CALL_EXPR = new RocElementType("CALL_EXPR");
   IElementType CHAR_LITERAL = new RocElementType("CHAR_LITERAL");
   IElementType ELLIPSIS_EXPR = new RocElementType("ELLIPSIS_EXPR");
@@ -207,6 +208,9 @@ public interface RocTypes {
       }
       else if (type == BINARY_EXPR) {
         return new RocBinaryExprImpl(node);
+      }
+      else if (type == BLOCK_EXPR) {
+        return new RocBlockExprImpl(node);
       }
       else if (type == CALL_EXPR) {
         return new RocCallExprImpl(node);

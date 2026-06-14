@@ -357,7 +357,7 @@ expr ::= orExpr
        | qualifiedNameExpr | tagExpr | identExpr
        | ellipsisExpr         // `...`
        | ifExpr | matchExpr | forExpr | lambdaExpr   // control flow (M4e)
-       | listExpr | tupleExpr | recordExpr
+       | listExpr | tupleExpr | recordExpr | blockExpr   // recordExpr FIRST (see blockExpr)
 
 // -- binary-operator ladder (M4d) ---------------------------
 // All binary operators share ONE BINARY_EXPR node (faithful to the reference's single bin_op);
@@ -471,14 +471,25 @@ listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
 // (`// TODO: Parenthesized expressions`) and consistent with tuplePattern.
 tupleExpr ::= (NO_SPACE_LPAREN | LPAREN) (expr (COMMA expr)* COMMA?)? RPAREN
 
-// `{` is record-ONLY here; the record-vs-block disambiguation arrives with blocks (M4e).
-// Unlike record TYPE/PATTERN, the update extension is a PREFIX (ext first), per the
-// `.OpenCurly` arm of parseExprWithBp.
+// `{`-primary RECORD form. Listed before blockExpr in `expr`; record-first ordering IS the
+// record-vs-block split (see blockExpr). Unlike record TYPE/PATTERN, the update extension is a
+// PREFIX (ext first), per the `.OpenCurly` arm of parseExprWithBp.
 recordExpr ::= LBRACE recordExprBody? RBRACE
 private recordExprBody ::= recordExprExt COMMA (recordExprField (COMMA recordExprField)* COMMA?)?
                          | recordExprField (COMMA recordExprField)* COMMA?
 recordExprExt   ::= DOUBLE_DOT expr
 recordExprField ::= LOWER_IDENT (OP_COLON expr)?
+
+// Record-vs-block split is by ORDER: recordExpr (first in `expr`) commits only on a genuine record
+// body and rolls back on a statement token (`=`, `x.y`, `1+2`, a 2nd bare ident), so blocks fall
+// here. Matches Parser.zig's `.OpenCurly` arm (2909-3010) except `{ ident }` — reference: block
+// returning `ident`; us: shorthand record (type-level only, reversible via a later `=`-lookahead
+// predicate). `+` (non-empty) leaves `{}` to recordExpr, the reference's empty record.
+blockExpr ::= LBRACE blockStmt+ RBRACE
+
+// MINIMAL slice — keyword statements (expect/crash/return/var/while/break/dbg) deferred to M4f.
+// Private: the concrete node attaches directly under BLOCK_EXPR, like top-level `statement`.
+private blockStmt ::= valueDecl | valueAnnotation | expr
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]

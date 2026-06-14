@@ -23,6 +23,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitBlockExpr(@NotNull RocBlockExpr o) {
+    visitExpr(o);
+  }
+
   public void visitCallExpr(@NotNull RocCallExpr o) {
     visitExpr(o);
   }
