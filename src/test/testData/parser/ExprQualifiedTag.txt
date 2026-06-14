@@ -1,0 +1,10 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocIdentPatternImpl(IDENT_PATTERN)
+      PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RocQualifiedNameExprImpl(QUALIFIED_NAME_EXPR)
+      PsiElement(UPPER_IDENT)('Json')
+      PsiElement(NO_SPACE_DOT_UPPER_IDENT)('.Ok')

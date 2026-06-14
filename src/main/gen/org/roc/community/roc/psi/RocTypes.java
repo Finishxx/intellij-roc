@@ -11,9 +11,12 @@ public interface RocTypes {
   IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
+  IElementType CALL_EXPR = new RocElementType("CALL_EXPR");
   IElementType CHAR_LITERAL = new RocElementType("CHAR_LITERAL");
   IElementType EXPOSED_ITEM = new RocElementType("EXPOSED_ITEM");
   IElementType EXPOSES = new RocElementType("EXPOSES");
+  IElementType EXPR = new RocElementType("EXPR");
+  IElementType FIELD_ACCESS_EXPR = new RocElementType("FIELD_ACCESS_EXPR");
   IElementType FLOAT_LITERAL = new RocElementType("FLOAT_LITERAL");
   IElementType FUNCTION_TYPE = new RocElementType("FUNCTION_TYPE");
   IElementType HEADER = new RocElementType("HEADER");
@@ -30,6 +33,7 @@ public interface RocTypes {
   IElementType LIST_PATTERN = new RocElementType("LIST_PATTERN");
   IElementType LIST_REST_PATTERN = new RocElementType("LIST_REST_PATTERN");
   IElementType LITERAL_PATTERN = new RocElementType("LITERAL_PATTERN");
+  IElementType METHOD_CALL_EXPR = new RocElementType("METHOD_CALL_EXPR");
   IElementType MODULE_HEADER = new RocElementType("MODULE_HEADER");
   IElementType MODULE_NAME = new RocElementType("MODULE_NAME");
   IElementType PACKAGES = new RocElementType("PACKAGES");
@@ -41,6 +45,7 @@ public interface RocTypes {
   IElementType PLATFORM_REQUIRES = new RocElementType("PLATFORM_REQUIRES");
   IElementType PLATFORM_TARGETS = new RocElementType("PLATFORM_TARGETS");
   IElementType PROVIDES = new RocElementType("PROVIDES");
+  IElementType QUALIFIED_NAME_EXPR = new RocElementType("QUALIFIED_NAME_EXPR");
   IElementType RECORD_EXPR = new RocElementType("RECORD_EXPR");
   IElementType RECORD_EXPR_EXT = new RocElementType("RECORD_EXPR_EXT");
   IElementType RECORD_EXPR_FIELD = new RocElementType("RECORD_EXPR_FIELD");
@@ -64,6 +69,7 @@ public interface RocTypes {
   IElementType TARGET_FILE = new RocElementType("TARGET_FILE");
   IElementType TARGET_LINK_ENTRY = new RocElementType("TARGET_LINK_ENTRY");
   IElementType TARGET_LINK_TYPE = new RocElementType("TARGET_LINK_TYPE");
+  IElementType TUPLE_ACCESS_EXPR = new RocElementType("TUPLE_ACCESS_EXPR");
   IElementType TUPLE_EXPR = new RocElementType("TUPLE_EXPR");
   IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
@@ -190,6 +196,9 @@ public interface RocTypes {
       else if (type == AS_PATTERN) {
         return new RocAsPatternImpl(node);
       }
+      else if (type == CALL_EXPR) {
+        return new RocCallExprImpl(node);
+      }
       else if (type == CHAR_LITERAL) {
         return new RocCharLiteralImpl(node);
       }
@@ -198,6 +207,9 @@ public interface RocTypes {
       }
       else if (type == EXPOSES) {
         return new RocExposesImpl(node);
+      }
+      else if (type == FIELD_ACCESS_EXPR) {
+        return new RocFieldAccessExprImpl(node);
       }
       else if (type == FLOAT_LITERAL) {
         return new RocFloatLiteralImpl(node);
@@ -247,6 +259,9 @@ public interface RocTypes {
       else if (type == LITERAL_PATTERN) {
         return new RocLiteralPatternImpl(node);
       }
+      else if (type == METHOD_CALL_EXPR) {
+        return new RocMethodCallExprImpl(node);
+      }
       else if (type == MODULE_HEADER) {
         return new RocModuleHeaderImpl(node);
       }
@@ -279,6 +294,9 @@ public interface RocTypes {
       }
       else if (type == PROVIDES) {
         return new RocProvidesImpl(node);
+      }
+      else if (type == QUALIFIED_NAME_EXPR) {
+        return new RocQualifiedNameExprImpl(node);
       }
       else if (type == RECORD_EXPR) {
         return new RocRecordExprImpl(node);
@@ -348,6 +366,9 @@ public interface RocTypes {
       }
       else if (type == TARGET_LINK_TYPE) {
         return new RocTargetLinkTypeImpl(node);
+      }
+      else if (type == TUPLE_ACCESS_EXPR) {
+        return new RocTupleAccessExprImpl(node);
       }
       else if (type == TUPLE_EXPR) {
         return new RocTupleExprImpl(node);

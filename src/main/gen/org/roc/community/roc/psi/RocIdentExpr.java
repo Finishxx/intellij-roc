@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocIdentExpr extends PsiElement {
+public interface RocIdentExpr extends RocExpr {
 
   @Nullable
   PsiElement getLowerIdent();

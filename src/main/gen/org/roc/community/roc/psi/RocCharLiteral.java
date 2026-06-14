@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocCharLiteral extends PsiElement {
+public interface RocCharLiteral extends RocExpr {
 
   @NotNull
   PsiElement getSingleQuote();

@@ -5,33 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocListExpr extends PsiElement {
+public interface RocListExpr extends RocExpr {
 
   @NotNull
-  List<RocCharLiteral> getCharLiteralList();
-
-  @NotNull
-  List<RocFloatLiteral> getFloatLiteralList();
-
-  @NotNull
-  List<RocIdentExpr> getIdentExprList();
-
-  @NotNull
-  List<RocIntLiteral> getIntLiteralList();
-
-  @NotNull
-  List<RocListExpr> getListExprList();
-
-  @NotNull
-  List<RocRecordExpr> getRecordExprList();
-
-  @NotNull
-  List<RocString> getStringList();
-
-  @NotNull
-  List<RocTagExpr> getTagExprList();
-
-  @NotNull
-  List<RocTupleExpr> getTupleExprList();
+  List<RocExpr> getExprList();
 
 }

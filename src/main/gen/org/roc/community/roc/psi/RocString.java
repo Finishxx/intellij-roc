@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RocString extends PsiElement {
+public interface RocString extends RocExpr {
 
   @NotNull
   List<RocStringInterpolation> getStringInterpolationList();

@@ -10,23 +10,11 @@ public interface RocValueDecl extends PsiElement {
   @Nullable
   RocAsPattern getAsPattern();
 
-  @Nullable
-  RocCharLiteral getCharLiteral();
-
-  @Nullable
-  RocFloatLiteral getFloatLiteral();
-
-  @Nullable
-  RocIdentExpr getIdentExpr();
+  @NotNull
+  List<RocExpr> getExprList();
 
   @Nullable
   RocIdentPattern getIdentPattern();
-
-  @Nullable
-  RocIntLiteral getIntLiteral();
-
-  @Nullable
-  RocListExpr getListExpr();
 
   @Nullable
   RocListPattern getListPattern();
@@ -35,22 +23,10 @@ public interface RocValueDecl extends PsiElement {
   RocLiteralPattern getLiteralPattern();
 
   @Nullable
-  RocRecordExpr getRecordExpr();
-
-  @Nullable
   RocRecordPattern getRecordPattern();
-
-  @NotNull
-  List<RocString> getStringList();
-
-  @Nullable
-  RocTagExpr getTagExpr();
 
   @Nullable
   RocTagPattern getTagPattern();
-
-  @Nullable
-  RocTupleExpr getTupleExpr();
 
   @Nullable
   RocTuplePattern getTuplePattern();

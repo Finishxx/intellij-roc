@@ -34,39 +34,15 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
   }
 
   @Override
-  @Nullable
-  public RocCharLiteral getCharLiteral() {
-    return findChildByClass(RocCharLiteral.class);
-  }
-
-  @Override
-  @Nullable
-  public RocFloatLiteral getFloatLiteral() {
-    return findChildByClass(RocFloatLiteral.class);
-  }
-
-  @Override
-  @Nullable
-  public RocIdentExpr getIdentExpr() {
-    return findChildByClass(RocIdentExpr.class);
+  @NotNull
+  public List<RocExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocExpr.class);
   }
 
   @Override
   @Nullable
   public RocIdentPattern getIdentPattern() {
     return findChildByClass(RocIdentPattern.class);
-  }
-
-  @Override
-  @Nullable
-  public RocIntLiteral getIntLiteral() {
-    return findChildByClass(RocIntLiteral.class);
-  }
-
-  @Override
-  @Nullable
-  public RocListExpr getListExpr() {
-    return findChildByClass(RocListExpr.class);
   }
 
   @Override
@@ -83,38 +59,14 @@ public class RocValueDeclImpl extends ASTWrapperPsiElement implements RocValueDe
 
   @Override
   @Nullable
-  public RocRecordExpr getRecordExpr() {
-    return findChildByClass(RocRecordExpr.class);
-  }
-
-  @Override
-  @Nullable
   public RocRecordPattern getRecordPattern() {
     return findChildByClass(RocRecordPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RocString> getStringList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocString.class);
-  }
-
-  @Override
-  @Nullable
-  public RocTagExpr getTagExpr() {
-    return findChildByClass(RocTagExpr.class);
   }
 
   @Override
   @Nullable
   public RocTagPattern getTagPattern() {
     return findChildByClass(RocTagPattern.class);
-  }
-
-  @Override
-  @Nullable
-  public RocTupleExpr getTupleExpr() {
-    return findChildByClass(RocTupleExpr.class);
   }
 
   @Override

@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.roc.community.roc.psi.RocTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.roc.community.roc.psi.*;
 
-public class RocIdentExprImpl extends ASTWrapperPsiElement implements RocIdentExpr {
+public class RocIdentExprImpl extends RocExprImpl implements RocIdentExpr {
 
   public RocIdentExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RocVisitor visitor) {
     visitor.visitIdentExpr(this);
   }

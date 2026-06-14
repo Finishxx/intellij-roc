@@ -9,6 +9,11 @@
   psiImplPackage = "org.roc.community.roc.psi.impl"
   psiClassPrefix = "Roc"
 
+  // Every alternative of the `expr` engine root extends it (→ a shared RocExpr base), which
+  // is how Grammar-Kit groups the expression rules for its left-recursion/priority engine.
+  // Full-matches rule names: `*Literal`, `string`, `*Expr` — not recordExprExt/…Field/…Pattern.
+  extends("string|.*Literal|.*Expr")=expr
+
 
   tokens = [
     // brackets & punctuation
@@ -326,9 +331,31 @@ inferredType    ::= UNDERSCORE        // _
 inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 
 // == expressions (M4) =======================================
-// parseExprWithBp in the Zig reference. Dispatch-only like `typeAnno` (no wrapper node).
-private expr ::= intLiteral | floatLiteral | charLiteral | string | identExpr | tagExpr
-               | listExpr | tupleExpr | recordExpr
+// parseExprWithBp in the Zig reference, via Grammar-Kit's expression engine. The postfix
+// suffix rules are left-recursive (they reference `expr` on the left), so the generator
+// emits a Pratt parser that builds the left-nested tree (`a.b(c).d` → field(method(a,b,c),d)).
+// Listed low→high priority, top→bottom: suffixes first, then the primary atoms (tightest)
+// last. `expr` is the engine root — it produces NO node of its own; the matched alternative
+// produces its node, so existing atom/collection trees are unchanged.
+expr ::= callExpr
+       | methodCallExpr
+       | fieldAccessExpr
+       | tupleAccessExpr
+       | intLiteral | floatLiteral | charLiteral | string
+       | qualifiedNameExpr | tagExpr | identExpr
+       | listExpr | tupleExpr | recordExpr
+
+// Postfix application/access — each wraps the preceding `expr`. Application needs a no-space
+// `(` (NO_SPACE_LPAREN); the dot before field/method/tuple access may be spaced, so method
+// chains can break across lines (reference suffix loop accepts both dot forms, Parser.zig 3146).
+callExpr        ::= expr callArgs
+// UFCS method call (`x.f(a)` passes `x` as an arg) — a distinct node from call-of-field-access,
+// faithful to the reference's dedicated `method_call` (Parser.zig 3223). Must precede
+// fieldAccessExpr: they share the `expr .lowerIdent` prefix, this one also requires the `(`.
+methodCallExpr  ::= expr (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) callArgs
+fieldAccessExpr ::= expr (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT)
+tupleAccessExpr ::= expr (NO_SPACE_DOT_INT | DOT_INT)
+private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
 
 // Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
 // — keeps later type-inference/inspections a direct match. Multiline + typed suffixes later.
@@ -336,10 +363,23 @@ intLiteral   ::= INT
 floatLiteral ::= FLOAT
 charLiteral  ::= SINGLE_QUOTE
 
+// Bare lower-start name. NOT qualified: the reference only chains upper-start names
+// (parseQualificationChain is called only from the `.UpperIdent` arm), so `json.foo` is this
+// bare ident plus a `.foo` field-access suffix, NOT a qualified name.
 identExpr ::= LOWER_IDENT | NAMED_UNDERSCORE
-// No qualification here: the reference only chains upper-start names, and dotted access is
-// itself a suffix — both land in M4c.
-tagExpr   ::= UPPER_IDENT
+
+// Upper-start names. A bare `Ok` is a tag; a dotted chain (`Json.Ok`, `Json.decode`,
+// `Core.Json.Utf8`) is a single qualified name. We deliberately do NOT split the chain into
+// tag-vs-qualified-ident at parse time: Grammar-Kit's `*`/`+` are greedy WITHOUT backtracking,
+// so `qualChainSeg* <trailing-dotted-token>` can never match — the loop eats the token the
+// trailing match needs (qualChainSeg itself matches that token). Instead the chain is consumed
+// greedily in one node, faithful to parseQualificationChain's single pass (Parser.zig 2674);
+// the tag-vs-value distinction (final segment upper→tag, lower→qualified value) is a later-phase
+// check on the last child token. qualifiedNameExpr precedes tagExpr in `expr` so a chain is
+// taken whole here, not as a bare tag + dotted suffix.
+qualifiedNameExpr ::= UPPER_IDENT qualChainSeg+
+tagExpr           ::= UPPER_IDENT
+private qualChainSeg ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
 
 listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
 

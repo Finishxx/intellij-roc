@@ -1,0 +1,11 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocIdentPatternImpl(IDENT_PATTERN)
+      PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RocFieldAccessExprImpl(FIELD_ACCESS_EXPR)
+      RocIdentExprImpl(IDENT_EXPR)
+        PsiElement(LOWER_IDENT)('rec')
+      PsiElement(NO_SPACE_DOT_LOWER_IDENT)('.field')

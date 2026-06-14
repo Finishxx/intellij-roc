@@ -19,8 +19,12 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitCallExpr(@NotNull RocCallExpr o) {
+    visitExpr(o);
+  }
+
   public void visitCharLiteral(@NotNull RocCharLiteral o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitExposedItem(@NotNull RocExposedItem o) {
@@ -31,8 +35,16 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitFloatLiteral(@NotNull RocFloatLiteral o) {
+  public void visitExpr(@NotNull RocExpr o) {
     visitPsiElement(o);
+  }
+
+  public void visitFieldAccessExpr(@NotNull RocFieldAccessExpr o) {
+    visitExpr(o);
+  }
+
+  public void visitFloatLiteral(@NotNull RocFloatLiteral o) {
+    visitExpr(o);
   }
 
   public void visitFunctionType(@NotNull RocFunctionType o) {
@@ -48,7 +60,7 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitIdentExpr(@NotNull RocIdentExpr o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitIdentPattern(@NotNull RocIdentPattern o) {
@@ -76,11 +88,11 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitIntLiteral(@NotNull RocIntLiteral o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitListExpr(@NotNull RocListExpr o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitListPattern(@NotNull RocListPattern o) {
@@ -93,6 +105,10 @@ public class RocVisitor extends PsiElementVisitor {
 
   public void visitLiteralPattern(@NotNull RocLiteralPattern o) {
     visitPsiElement(o);
+  }
+
+  public void visitMethodCallExpr(@NotNull RocMethodCallExpr o) {
+    visitExpr(o);
   }
 
   public void visitModuleHeader(@NotNull RocModuleHeader o) {
@@ -139,8 +155,12 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitQualifiedNameExpr(@NotNull RocQualifiedNameExpr o) {
+    visitExpr(o);
+  }
+
   public void visitRecordExpr(@NotNull RocRecordExpr o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitRecordExprExt(@NotNull RocRecordExprExt o) {
@@ -184,7 +204,7 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitString(@NotNull RocString o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitStringInterpolation(@NotNull RocStringInterpolation o) {
@@ -192,7 +212,7 @@ public class RocVisitor extends PsiElementVisitor {
   }
 
   public void visitTagExpr(@NotNull RocTagExpr o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitTagPattern(@NotNull RocTagPattern o) {
@@ -231,8 +251,12 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitTupleAccessExpr(@NotNull RocTupleAccessExpr o) {
+    visitExpr(o);
+  }
+
   public void visitTupleExpr(@NotNull RocTupleExpr o) {
-    visitPsiElement(o);
+    visitExpr(o);
   }
 
   public void visitTuplePattern(@NotNull RocTuplePattern o) {

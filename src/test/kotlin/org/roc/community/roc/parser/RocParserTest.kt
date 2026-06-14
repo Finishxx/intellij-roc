@@ -1,6 +1,5 @@
 package org.roc.community.roc.parser
 
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.ParsingTestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -172,6 +171,38 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testExprNested() = doTest(true)
+
+    // -- suffixes & qualification (M4c; hosted by valueDecl; see Roc.bnf) --
+
+    @Test
+    fun testExprCall() = doTest(true)
+
+    @Test
+    fun testExprCallEmpty() = doTest(true)
+
+    @Test
+    fun testExprFieldAccess() = doTest(true)
+
+    @Test
+    fun testExprTupleAccess() = doTest(true)
+
+    @Test
+    fun testExprMethodCall() = doTest(true)
+
+    @Test
+    fun testExprTagApplied() = doTest(true)
+
+    @Test
+    fun testExprQualifiedTag() = doTest(true)
+
+    @Test
+    fun testExprQualifiedIdent() = doTest(true)
+
+    @Test
+    fun testExprQualifiedCall() = doTest(true)
+
+    @Test
+    fun testExprChained() = doTest(true)
 
     // -- platform header (the one previously-deferred header; see Roc.bnf) --
 
