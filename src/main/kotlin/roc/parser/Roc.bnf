@@ -1,5 +1,6 @@
 // Ideas:
 //  - Make a Identifier superclass for LOWER_IDENT, NO_SPACE_DOT_UPPER_IDENT etc.
+// Reference is zig compiler at d7e3fd64
 {
   parserClass = "org.roc.community.roc.parser.RocParser"
   elementTypeHolderClass = "org.roc.community.roc.psi.RocTypes"
@@ -132,26 +133,22 @@
 root ::= header? statement*
 
 // `statement` (top level) and `blockStmt` (in a block) both mirror the reference's single parseStmt;
-// the top_level/in_body differences (import top-level-only, var in-body-only, type decls) are
-// later-phase context checks. The trailing `expr` is the final / bare-expression statement
-// (Parser.zig 2140) — a standalone `dbg y`, a tag, a call, etc. Each decl/anno arm rolls back when
-// its committing `=`/`:` is absent, so `expr` is reached only for a genuine bare expression.
+// the top_level/in_body differences (import top-level-only, var in-body-only) are later-phase checks.
+// The trailing `expr` is the bare-expression statement (Parser.zig 2140); each decl/anno arm rolls
+// back when its committing `=`/`:` is absent, so `expr` is reached only for a genuine bare expr.
 private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
 
-// Lexer-only tokens — the lexer emits these but no rule consumes them: `COMMENT` is trivia
-// (RocParserDefinition.getCommentTokens); `@`-opaque names and a lone `\` are tokenizer-only in the
-// reference TOO (Parser.zig never reads OpaqueName/OpBackslash — they'd be malformed there), so a
-// rule would invent syntax. This rule is NEVER reached from `root`; it exists only so Grammar-Kit
-// keeps generating their RocTypes constants (a no-text token is pruned unless some rule names it),
-// which the generated lexer and RocTokenSets.COMMENTS depend on. (MULTILINE_STRING_START dropped from
-// this list in M5 — now anchored by the real multilineStringExpr rule.)
+// Tokens the lexer emits but no rule consumes (COMMENT is trivia; `@`-opaque names and a lone `\` are
+// tokenizer-only in the reference too, so a rule would invent syntax). NEVER reached from `root` — it
+// exists only so Grammar-Kit keeps generating their RocTypes constants (a no-text token is pruned
+// unless some rule names it), which the generated lexer and RocTokenSets.COMMENTS depend on.
 private lexerOnlyTokens ::= COMMENT | OPAQUE_NAME | OP_BACKSLASH
 
 
 // == headers ================================================
 // Dispatched on a distinct leading keyword (app/module/package/hosted/platform),
-// so the alternatives are first-token-disjoint and order is irrelevant
-// platform header is difficult and uses many other primitives is at the bottom of this file
+// so the alternatives are first-token-disjoint and order is irrelevant.
+// platformHeader is large — defined at the bottom of this file.
 header ::= appHeader | moduleHeader | packageHeader | hostedHeader | platformHeader
 
 appHeader     ::= KW_APP provides packages
@@ -206,17 +203,13 @@ private fileImport ::= string KW_AS LOWER_IDENT OP_COLON typeAnno
 valueAnnotation ::= KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
 
 // `Name(a) : T` (alias) | `Name(a) := T` (nominal) | `Name(a) :: T` (opaque).
-
-// Params are PARENTHESISED type vars (parseTypeIdent) — the old space-separated
 typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause? associatedBlock?
 
-// Associated items `.{ … }` on a nominal/opaque decl (Parser.zig 2047). `.{` is DOT + LBRACE (the lexer
-// has no combined token; the bare `.` is plain DOT because `{` is not an ident char). Holds the
-// reference's "associated types and values" — annotations, value decls, nested type decls. Items are
-// private so VALUE_ANNOTATION / VALUE_DECL / TYPE_DECL attach directly under ASSOCIATED_BLOCK (like
-// blockStmt), and reuse the existing decl-vs-anno rollback ordering. Semantic-only rules deferred to a
-// later phase: alias may not carry a block (type_alias_cannot_have_associated); the last item may not be
-// a bare expr (nominal_associated_cannot_have_final_expression) — hence no `expr` arm here.
+// Associated items `.{ … }` on a nominal/opaque decl (Parser.zig 2047). `.{` is DOT + LBRACE (no
+// combined token; the `.` is plain DOT because `{` isn't an ident char). Items are private so each
+// VALUE_ANNOTATION/VALUE_DECL/TYPE_DECL attaches directly under ASSOCIATED_BLOCK (like blockStmt).
+// Deferred semantic checks: an alias may not carry a block, and the last item may not be a bare expr
+// (hence no `expr` arm).
 associatedBlock ::= DOT LBRACE associatedItem* RBRACE
 private associatedItem ::= valueAnnotation | typeDecl | valueDecl
 
@@ -248,8 +241,8 @@ varDecl ::= KW_VAR LOWER_IDENT OP_ASSIGN expr
 
 // == keyword statements =====================================
 // parseStmtByType (Parser.zig 1791-1906), shared by `statement` and `blockStmt`. Context limits
-// (var in-body, import top-level) are a later-phase check, not grammar. `var` waits for the
-// valueDecl rework; `dbg`/`for` are expressions (see dbgExpr/forExpr).
+// (var in-body, import top-level) are a later-phase check, not grammar. `dbg`/`for` are expressions
+// (see dbgExpr/forExpr).
 private keywordStmt ::= expectStmt | crashStmt | returnStmt | whileStmt | breakStmt
 expectStmt ::= KW_EXPECT expr
 crashStmt  ::= KW_CRASH  expr
@@ -300,22 +293,15 @@ recordPatternField ::= DOUBLE_DOT LOWER_IDENT?
 tuplePattern ::= (NO_SPACE_LPAREN | LPAREN) (pattern (COMMA pattern)* COMMA?)? RPAREN
 
 // == type annotations =======================================
-// Faithful to parseTypeAnno in the Zig reference (roc-lang/src/parse/Parser.zig).
+// Faithful to parseTypeAnno (roc-lang/src/parse/Parser.zig). The arrow function is the
+// lowest-precedence type; `functionType` REQUIRES a trailing arrow, so a plain type backtracks to
+// `primaryType` — the same backtracking that lets a record field or apply arg stop at the next comma.
 //
-// The arrow function is the lowest-precedence type; its argument list may be a
-// bare comma list (`Str, Str -> Str`). `functionType` REQUIRES a trailing arrow,
-// so for a plain type it backtracks to `primaryType`. That same backtracking is
-// what lets a record field type stop at the next field (`{ a: Str, b: U64 }`)
-// and an apply arg stop at the next arg (`Dict(Str, List(U64))`) — the comma
-// list is only kept when an arrow actually follows.
-//
-// KNOWN LIMITATION: an unparenthesized arrow used as a NON-final argument inside
-// `( )` / apply args (e.g. `Dict(k, v -> w)`) is grabbed as one comma-grouped
-// function rather than two args. Roc flips comma/arrow precedence per-context via
-// a lookahead flag; we don't yet. Rare in practice — parenthesize for now.
-// typeAnno / primaryType are dispatch-only (private) so the concrete type node
-// (functionType, typeReference, recordType, …) attaches directly, with no
-// redundant wrapper — same idea as `header`.
+// KNOWN LIMITATION: a non-final unparenthesized arrow inside `()`/apply args (`Dict(k, v -> w)`) is
+// grabbed as one comma-grouped function, not two args (Roc flips comma/arrow precedence per-context
+// via lookahead; we don't yet). Parenthesize for now.
+// typeAnno/primaryType are private dispatch-only, so the concrete type node attaches with no wrapper
+// (same idea as `header`).
 private typeAnno ::= functionType | primaryType
 
 functionType ::= typeFnArgs (OP_ARROW | OP_FAT_ARROW) typeAnno
@@ -358,11 +344,9 @@ inferredType    ::= UNDERSCORE        // _
 inferredTypeVar ::= NAMED_UNDERSCORE  // _name
 
 // == expressions (M4) =======================================
-// parseExprWithBp in the Zig reference, via Grammar-Kit's expression engine. `expr` is the
-// engine root — it produces NO node of its own; the matched alternative produces its node, so
-// existing atom/collection trees are unchanged. Alternatives are listed LOOSEST→TIGHTEST
-// (top→bottom), which is how the engine assigns precedence: the binary ladder (M4d) loosest,
-// then unary, then the left-recursive postfix suffixes (M4c), then the primary atoms (tightest).
+// parseExprWithBp, via Grammar-Kit's expression engine. `expr` is the engine root — it produces NO
+// node of its own; the matched alternative produces its node. Alternatives run LOOSEST→TIGHTEST
+// (top→bottom) = precedence (binary ladder loosest → unary → postfix suffixes → primary atoms).
 // Binary precedence/associativity mirror getTokenBP (Parser.zig 4321); see the ladder below.
 expr ::= orExpr
        | andExpr
@@ -388,13 +372,11 @@ expr ::= orExpr
        | listExpr | tupleExpr | recordExpr | blockExpr   // recordExpr FIRST (see blockExpr)
 
 // -- binary-operator ladder (M4d) ---------------------------
-// All binary operators share ONE BINARY_EXPR node (faithful to the reference's single bin_op);
-// the operator token distinguishes them. The `fake` base generates the RocBinaryExpr PSI
-// interface (+ left/right accessors) but no parser; each real rule reuses its element type via
-// `elementType`. Precedence is set by each rule's position in `expr` above (ascending
-// getTokenBP). `and`/`or` are right-assoc (reference left-bp > right-bp); the rest left
-// (engine default). `extends=binaryExpr` overrides the global `extends(...)=expr`, but
-// `binaryExpr` itself matches `.*Expr` so every rule still extends the `expr` root.
+// All binary operators share ONE BINARY_EXPR node (the reference's single bin_op); the operator token
+// distinguishes them. `fake binaryExpr` generates the PSI interface + left/right accessors but no
+// parser; each real rule reuses it via `elementType`, with precedence set by its position in `expr`.
+// `and`/`or` are right-assoc (reference left-bp > right-bp); the rest left (engine default). The
+// `extends=binaryExpr` override still matches `.*Expr`, so every rule keeps extending the `expr` root.
 fake binaryExpr ::= expr binaryOp expr { methods=[ left="expr[0]" right="expr[1]" ] }
 private binaryOp ::= OP_STAR | OP_SLASH | OP_DOUBLE_SLASH | OP_PERCENT | OP_PLUS
                    | OP_BINARY_MINUS | OP_DOUBLE_QUESTION | OP_QUESTION | OP_EQUALS
@@ -420,9 +402,8 @@ mulExpr         ::= expr OP_STAR         expr { extends=binaryExpr elementType=b
 // one UNARY_EXPR node. Binds tighter than all binary, looser than the suffixes (`-a.b` = `-(a.b)`).
 unaryExpr ::= (OP_UNARY_MINUS | OP_BANG) expr
 
-// Postfix application/access — each wraps the preceding `expr`. Application needs a no-space
-// `(` (NO_SPACE_LPAREN); the dot before field/method/tuple access may be spaced, so method
-// chains can break across lines (reference suffix loop accepts both dot forms, Parser.zig 3146).
+// Postfix application/access suffixes. The dot before field/method/tuple access may be spaced, so
+// method chains can break across lines (reference suffix loop accepts both dot forms, Parser.zig 3146).
 callExpr        ::= expr callArgs
 // UFCS method call (`x.f(a)` passes `x` as an arg) — a distinct node from call-of-field-access,
 // faithful to the reference's dedicated `method_call` (Parser.zig 3223). Must precede
@@ -442,14 +423,10 @@ arrowCallExpr ::= expr OP_ARROW arrowCallTarget
 private arrowCallTarget ::= (qualifiedNameExpr | tagExpr | identExpr | tupleExpr) callArgs*
 private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
 
-// Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
-// — keeps later type-inference/inspections a direct match. Multiline is multilineStringExpr;
-// typed numeric suffixes are the two rules below.
-// Typed numeric literal `5.U8` / `3.0.F64` — the reference's typed_int / typed_frac (Parser.zig 2790,
-// 2831): an INT/FLOAT immediately followed (no space) by NO_SPACE_DOT_UPPER_IDENT. A primary-level form
-// bound to a bare numeric token, NOT a general postfix (so `(1+2).U8` is not this). Listed before the
-// plain literals in `expr` so the suffixed form wins when `.Type` is present; falls through to
-// intLiteral for a bare `5`. Distinct nodes mirror the reference's typed_int / typed_frac.
+// Distinct literal nodes (not one literalExpr) mirror the reference's int/frac/single-quote and its
+// typed_int/typed_frac (Parser.zig 2790) — a direct match for later type-inference. Typed forms are
+// primary-level (bound to a bare numeric token, not a postfix: `(1+2).U8` isn't one); listed before
+// the plain literals so the `.Type` suffix wins when present, else falls through.
 typedIntLiteral   ::= INT   NO_SPACE_DOT_UPPER_IDENT
 typedFloatLiteral ::= FLOAT NO_SPACE_DOT_UPPER_IDENT
 intLiteral   ::= INT
@@ -461,15 +438,11 @@ charLiteral  ::= SINGLE_QUOTE
 // bare ident plus a `.foo` field-access suffix, NOT a qualified name.
 identExpr ::= LOWER_IDENT | NAMED_UNDERSCORE
 
-// Upper-start names. A bare `Ok` is a tag; a dotted chain (`Json.Ok`, `Json.decode`,
-// `Core.Json.Utf8`) is a single qualified name. We deliberately do NOT split the chain into
-// tag-vs-qualified-ident at parse time: Grammar-Kit's `*`/`+` are greedy WITHOUT backtracking,
-// so `qualChainSeg* <trailing-dotted-token>` can never match — the loop eats the token the
-// trailing match needs (qualChainSeg itself matches that token). Instead the chain is consumed
-// greedily in one node, faithful to parseQualificationChain's single pass (Parser.zig 2674);
-// the tag-vs-value distinction (final segment upper→tag, lower→qualified value) is a later-phase
-// check on the last child token. qualifiedNameExpr precedes tagExpr in `expr` so a chain is
-// taken whole here, not as a bare tag + dotted suffix.
+// Upper-start names: a bare `Ok` is a tag; a dotted chain (`Json.Ok`, `Core.Json.Utf8`) is ONE
+// qualified name. The chain isn't split into tag-vs-value at parse time because Grammar-Kit's `*`/`+`
+// are greedy without backtracking (the loop would eat the trailing token), so it's consumed whole,
+// per parseQualificationChain (Parser.zig 2674); the final-segment tag-vs-value distinction is a
+// later-phase check. Precedes tagExpr in `expr` so a chain is taken whole, not tag + suffix.
 qualifiedNameExpr ::= UPPER_IDENT qualChainSeg+
 tagExpr           ::= UPPER_IDENT
 private qualChainSeg ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
@@ -479,12 +452,10 @@ private qualChainSeg ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
 ellipsisExpr ::= TRIPLE_DOT
 
 // -- control-flow keyword expressions (M4e) -----------------
-// Primary-switch arms of parseExprWithBp. All are EXPRESSIONS in Roc (the reference puts
-// if/match/for/lambda in parseExprWithBp, not parseStmt), so each matches `.*Expr` and joins the
-// engine as a primary via the global extends(...). Their lead tokens (KW_IF/KW_MATCH/KW_FOR/OP_BAR)
-// are disjoint from every other primary. Bodies are full `expr`s — in practice a block (a later
-// slice), but any expr works: Roc has no juxtaposition application, so adjacent exprs are
-// unambiguous (the inner `expr` parses to completion, then the next has no linking operator/suffix).
+// Primary-switch arms of parseExprWithBp — all EXPRESSIONS in Roc (not statements), so each joins the
+// engine as a primary via the global extends(...). Lead tokens (KW_IF/KW_MATCH/KW_FOR/OP_BAR) are
+// disjoint. Bodies are full `expr`s — in practice a block, but any expr works (Roc has no juxtaposition
+// application, so adjacent exprs are unambiguous).
 
 // No `then` keyword in Roc — the branches are juxtaposed. Missing `else` is the reference's
 // statement-form `if_without_else` (Parser.zig 3034); we accept it as an IF_EXPR with no else.

@@ -7,6 +7,7 @@ import static org.roc.community.roc.psi.RocTypes.*;
 
 %%
 
+// Reference is zig compiler at d7e3fd64
 %class RocLexer
 %implements FlexLexer
 %unicode
