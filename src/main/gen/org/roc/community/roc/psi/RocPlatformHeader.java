@@ -7,22 +7,22 @@ import com.intellij.psi.PsiElement;
 
 public interface RocPlatformHeader extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocExposes getExposes();
 
-  @NotNull
+  @Nullable
   RocPackages getPackages();
 
-  @NotNull
+  @Nullable
   RocPlatformProvides getPlatformProvides();
 
-  @NotNull
+  @Nullable
   RocPlatformRequires getPlatformRequires();
 
   @Nullable
   RocPlatformTargets getPlatformTargets();
 
-  @NotNull
+  @Nullable
   RocString getString();
 
 }

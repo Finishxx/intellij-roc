@@ -28,27 +28,27 @@ public class RocPlatformHeaderImpl extends ASTWrapperPsiElement implements RocPl
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocExposes getExposes() {
-    return findNotNullChildByClass(RocExposes.class);
+    return findChildByClass(RocExposes.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocPackages getPackages() {
-    return findNotNullChildByClass(RocPackages.class);
+    return findChildByClass(RocPackages.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocPlatformProvides getPlatformProvides() {
-    return findNotNullChildByClass(RocPlatformProvides.class);
+    return findChildByClass(RocPlatformProvides.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocPlatformRequires getPlatformRequires() {
-    return findNotNullChildByClass(RocPlatformRequires.class);
+    return findChildByClass(RocPlatformRequires.class);
   }
 
   @Override
@@ -58,9 +58,9 @@ public class RocPlatformHeaderImpl extends ASTWrapperPsiElement implements RocPl
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocString getString() {
-    return findNotNullChildByClass(RocString.class);
+    return findChildByClass(RocString.class);
   }
 
 }

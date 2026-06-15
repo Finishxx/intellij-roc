@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RocHostedHeader extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocExposes getExposes();
 
 }

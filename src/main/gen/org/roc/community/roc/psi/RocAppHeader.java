@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface RocAppHeader extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocPackages getPackages();
 
-  @NotNull
+  @Nullable
   RocProvides getProvides();
 
 }

@@ -222,10 +222,13 @@ private associatedItemRecover  ::= !(RBRACE | KW_VAR | patternFirst)
 // platformHeader is large — defined at the bottom of this file.
 header ::= appHeader | moduleHeader | packageHeader | hostedHeader | platformHeader
 
-appHeader     ::= KW_APP provides packages
-moduleHeader  ::= KW_MODULE exposes
-packageHeader ::= KW_PACKAGE exposes packages
-hostedHeader  ::= KW_HOSTED exposes
+// pin=1 (after the disjoint lead keyword, failure-only): a half-typed header keeps a partial
+// header node with the error nested, instead of failing → `header?` skipping it → the root loop
+// dropping the keyword (not in statementFirst) and mis-parsing the rest as statements.
+appHeader     ::= KW_APP provides packages    { pin=1 }
+moduleHeader  ::= KW_MODULE exposes           { pin=1 }
+packageHeader ::= KW_PACKAGE exposes packages { pin=1 }
+hostedHeader  ::= KW_HOSTED exposes           { pin=1 }
 
 provides ::= exposedList
 exposes  ::= exposedList
@@ -639,12 +642,16 @@ private blockStmt ::= keywordStmt | valueAnnotation | varDecl | valueDecl | expr
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]
+// pin=1 (after KW_PLATFORM, failure-only — see the short-header comment). This 6-section rule
+// benefits most: a partially-typed platform header keeps a PLATFORM_HEADER while sections are
+// filled top-down. Pin-continuation applies — each missing section after the first reports its
+// own "X expected" (the accepted trade-off; the node is not rolled back).
 platformHeader ::= KW_PLATFORM string
                    KW_REQUIRES platformRequires
                    KW_EXPOSES  exposes
                    KW_PACKAGES packages
                    KW_PROVIDES platformProvides
-                   platformTargets?
+                   platformTargets? { pin=1 }
 
 // `requires {} {entries}` (rigids form) or `requires {entries}`; the entries brace is shared.
 platformRequires ::= LBRACE RBRACE requiresBrace | requiresBrace

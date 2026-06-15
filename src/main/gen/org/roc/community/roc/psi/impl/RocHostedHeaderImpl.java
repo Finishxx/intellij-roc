@@ -28,9 +28,9 @@ public class RocHostedHeaderImpl extends ASTWrapperPsiElement implements RocHost
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocExposes getExposes() {
-    return findNotNullChildByClass(RocExposes.class);
+    return findChildByClass(RocExposes.class);
   }
 
 }

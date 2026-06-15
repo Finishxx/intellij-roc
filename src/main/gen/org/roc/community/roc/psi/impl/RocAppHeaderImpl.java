@@ -28,15 +28,15 @@ public class RocAppHeaderImpl extends ASTWrapperPsiElement implements RocAppHead
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocPackages getPackages() {
-    return findNotNullChildByClass(RocPackages.class);
+    return findChildByClass(RocPackages.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocProvides getProvides() {
-    return findNotNullChildByClass(RocProvides.class);
+    return findChildByClass(RocProvides.class);
   }
 
 }

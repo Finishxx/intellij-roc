@@ -1,0 +1,12 @@
+FILE
+  RocHeaderImpl(HEADER)
+    RocAppHeaderImpl(APP_HEADER)
+      PsiElement(app)('app')
+      PsiWhiteSpace(' ')
+      RocProvidesImpl(PROVIDES)
+        PsiElement([)('[')
+        RocExposedItemImpl(EXPOSED_ITEM)
+          PsiElement(LOWER_IDENT)('main')
+        PsiElement(])(']')
+      PsiErrorElement:'{' expected
+        <empty list>

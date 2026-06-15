@@ -1,0 +1,6 @@
+FILE
+  RocHeaderImpl(HEADER)
+    RocModuleHeaderImpl(MODULE_HEADER)
+      PsiElement(module)('module')
+      PsiErrorElement:'[' expected
+        <empty list>

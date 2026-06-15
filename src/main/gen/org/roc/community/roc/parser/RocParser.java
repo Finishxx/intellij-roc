@@ -89,13 +89,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean appHeader(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "appHeader")) return false;
     if (!nextTokenIs(b, KW_APP)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, APP_HEADER, null);
     r = consumeToken(b, KW_APP);
-    r = r && provides_$(b, l + 1);
-    r = r && packages(b, l + 1);
-    exit_section_(b, m, APP_HEADER, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, provides_$(b, l + 1));
+    r = p && packages(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -752,12 +753,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean hostedHeader(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hostedHeader")) return false;
     if (!nextTokenIs(b, KW_HOSTED)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, HOSTED_HEADER, null);
     r = consumeToken(b, KW_HOSTED);
+    p = r; // pin = 1
     r = r && exposes(b, l + 1);
-    exit_section_(b, m, HOSTED_HEADER, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1191,12 +1193,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean moduleHeader(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "moduleHeader")) return false;
     if (!nextTokenIs(b, KW_MODULE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, MODULE_HEADER, null);
     r = consumeToken(b, KW_MODULE);
+    p = r; // pin = 1
     r = r && exposes(b, l + 1);
-    exit_section_(b, m, MODULE_HEADER, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1344,13 +1347,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean packageHeader(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "packageHeader")) return false;
     if (!nextTokenIs(b, KW_PACKAGE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PACKAGE_HEADER, null);
     r = consumeToken(b, KW_PACKAGE);
-    r = r && exposes(b, l + 1);
-    r = r && packages(b, l + 1);
-    exit_section_(b, m, PACKAGE_HEADER, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, exposes(b, l + 1));
+    r = p && packages(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -1541,21 +1545,22 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean platformHeader(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "platformHeader")) return false;
     if (!nextTokenIs(b, KW_PLATFORM)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PLATFORM_HEADER, null);
     r = consumeToken(b, KW_PLATFORM);
-    r = r && string(b, l + 1);
-    r = r && consumeToken(b, KW_REQUIRES);
-    r = r && platformRequires(b, l + 1);
-    r = r && consumeToken(b, KW_EXPOSES);
-    r = r && exposes(b, l + 1);
-    r = r && consumeToken(b, KW_PACKAGES);
-    r = r && packages(b, l + 1);
-    r = r && consumeToken(b, KW_PROVIDES);
-    r = r && platformProvides(b, l + 1);
-    r = r && platformHeader_10(b, l + 1);
-    exit_section_(b, m, PLATFORM_HEADER, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, string(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, KW_REQUIRES)) && r;
+    r = p && report_error_(b, platformRequires(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, KW_EXPOSES)) && r;
+    r = p && report_error_(b, exposes(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, KW_PACKAGES)) && r;
+    r = p && report_error_(b, packages(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, KW_PROVIDES)) && r;
+    r = p && report_error_(b, platformProvides(b, l + 1)) && r;
+    r = p && platformHeader_10(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // platformTargets?

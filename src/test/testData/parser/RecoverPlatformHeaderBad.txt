@@ -1,0 +1,11 @@
+FILE
+  RocHeaderImpl(HEADER)
+    RocPlatformHeaderImpl(PLATFORM_HEADER)
+      PsiElement(platform)('platform')
+      PsiWhiteSpace(' ')
+      RocStringImpl(STRING)
+        PsiElement(STRING_START)('"')
+        PsiElement(STRING_PART)('name')
+        PsiElement(STRING_END)('"')
+      PsiErrorElement:requires expected
+        <empty list>
