@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RocRequiresForAlias extends PsiElement {
 
-  @NotNull
+  @Nullable
   PsiElement getLowerIdent();
 
   @NotNull

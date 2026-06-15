@@ -584,4 +584,28 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testRecoverDbgExprBad() = doTest(true)
+
+    // -- error recovery: headers (pin=1 after the disjoint lead keyword; a half-typed header
+    //    keeps a partial header node instead of having its keyword dropped at root) --
+
+    @Test
+    fun testRecoverAppHeaderBad() = doTest(true)
+
+    @Test
+    fun testRecoverModuleHeaderBad() = doTest(true)
+
+    @Test
+    fun testRecoverPlatformHeaderBad() = doTest(true)
+
+    // -- error recovery: colon-committed entries (pin after OP_COLON; a half-typed `name :`
+    //    keeps a partial field node instead of recoverWhile eating `name :` as junk) --
+
+    @Test
+    fun testRecoverRecordTypeFieldBad() = doTest(true)
+
+    @Test
+    fun testRecoverWhereMethodBad() = doTest(true)
+
+    @Test
+    fun testRecoverPackageEntryBad() = doTest(true)
 }

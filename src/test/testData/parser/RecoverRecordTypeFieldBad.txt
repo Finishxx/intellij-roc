@@ -1,0 +1,16 @@
+FILE
+  RocValueAnnotationImpl(VALUE_ANNOTATION)
+    PsiElement(LOWER_IDENT)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    RocRecordTypeImpl(RECORD_TYPE)
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      RocRecordTypeFieldImpl(RECORD_TYPE_FIELD)
+        PsiElement(LOWER_IDENT)('bar')
+        PsiElement(:)(':')
+        PsiErrorElement:'..', <function type>, <tuple type>, <type reference>, NAMED_UNDERSCORE, '[', _, '{' or '}' expected, got '}'
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')

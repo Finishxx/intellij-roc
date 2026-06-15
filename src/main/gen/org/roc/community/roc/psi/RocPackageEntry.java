@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RocPackageEntry extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocString getString();
 
   @NotNull

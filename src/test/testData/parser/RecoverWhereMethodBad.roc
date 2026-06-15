@@ -1,0 +1,1 @@
+foo : a where [a.hash: ]

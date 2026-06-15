@@ -28,9 +28,9 @@ public class RocPackageEntryImpl extends ASTWrapperPsiElement implements RocPack
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocString getString() {
-    return findNotNullChildByClass(RocString.class);
+    return findChildByClass(RocString.class);
   }
 
   @Override

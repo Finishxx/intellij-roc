@@ -1326,13 +1326,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean packageEntry(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "packageEntry")) return false;
     if (!nextTokenIs(b, LOWER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, LOWER_IDENT, OP_COLON);
-    r = r && packageEntry_2(b, l + 1);
-    r = r && string(b, l + 1);
-    exit_section_(b, m, PACKAGE_ENTRY, r);
-    return r;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PACKAGE_ENTRY, null);
+    r = consumeTokens(b, 2, LOWER_IDENT, OP_COLON);
+    p = r; // pin = 2
+    r = r && report_error_(b, packageEntry_2(b, l + 1));
+    r = p && string(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // KW_PLATFORM?
@@ -2236,12 +2237,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean recordTypeField(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "recordTypeField")) return false;
     if (!nextTokenIs(b, LOWER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, LOWER_IDENT, OP_COLON);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, RECORD_TYPE_FIELD, null);
+    r = consumeTokens(b, 2, LOWER_IDENT, OP_COLON);
+    p = r; // pin = 2
     r = r && typeAnno(b, l + 1);
-    exit_section_(b, m, RECORD_TYPE_FIELD, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -2341,13 +2343,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean requiresEntry(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "requiresEntry")) return false;
     if (!nextTokenIs(b, "<requires entry>", LBRACK, LOWER_IDENT)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, REQUIRES_ENTRY, "<requires entry>");
     r = requiresEntry_0(b, l + 1);
-    r = r && consumeTokens(b, 0, LOWER_IDENT, OP_COLON);
+    r = r && consumeTokens(b, 2, LOWER_IDENT, OP_COLON);
+    p = r; // pin = 3
     r = r && typeAnno(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // requiresForClause?
@@ -2362,11 +2365,12 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean requiresForAlias(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "requiresForAlias")) return false;
     if (!nextTokenIs(b, UPPER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, UPPER_IDENT, OP_COLON, LOWER_IDENT);
-    exit_section_(b, m, REQUIRES_FOR_ALIAS, r);
-    return r;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, REQUIRES_FOR_ALIAS, null);
+    r = consumeTokens(b, 2, UPPER_IDENT, OP_COLON, LOWER_IDENT);
+    p = r; // pin = 2
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -3136,12 +3140,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean targetsField(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "targetsField")) return false;
     if (!nextTokenIs(b, LOWER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, LOWER_IDENT, OP_COLON);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TARGETS_FIELD, null);
+    r = consumeTokens(b, 2, LOWER_IDENT, OP_COLON);
+    p = r; // pin = 2
     r = r && targetsField_2(b, l + 1);
-    exit_section_(b, m, TARGETS_FIELD, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // string | targetLinkType
@@ -3960,14 +3965,15 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean whereMethod(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whereMethod")) return false;
     if (!nextTokenIs(b, LOWER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, WHERE_METHOD, null);
     r = consumeToken(b, LOWER_IDENT);
     r = r && whereMethod_1(b, l + 1);
     r = r && consumeToken(b, OP_COLON);
+    p = r; // pin = 3
     r = r && typeAnno(b, l + 1);
-    exit_section_(b, m, WHERE_METHOD, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT

@@ -241,7 +241,9 @@ exposedItem ::= LOWER_IDENT (KW_AS LOWER_IDENT)?
 // The brace-delimited packages block: `{ name: "path", pf: platform "path" }`
 packages     ::= LBRACE packagesElem* RBRACE { pin=1 }
 private packagesElem ::= !RBRACE packageEntry (COMMA | &RBRACE) { pin=1 recoverWhile=braceLowerIdentRecover }
-packageEntry ::= LOWER_IDENT OP_COLON KW_PLATFORM? string
+// pin=2 = after OP_COLON. `name :` keeps a partial PACKAGE_ENTRY (string-expected nested)
+// instead of packagesElem's recoverWhile eating `name :` as junk.
+packageEntry ::= LOWER_IDENT OP_COLON KW_PLATFORM? string { pin=2 }
 
 string ::= STRING_START stringElement* STRING_END
 private stringElement ::= STRING_PART | stringInterpolation
@@ -312,7 +314,10 @@ whereClause ::= KW_WHERE LBRACK whereClauseElem+ RBRACK { pin=2 }
 // loop stop at the closer once at least one clause is present.
 private whereClauseElem ::= !RBRACK whereClauseItem (COMMA | &RBRACK) { pin=1 recoverWhile=whereClauseRecover }
 private whereClauseItem ::= whereMethod | whereAlias
-whereMethod ::= LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLON typeAnno
+// pin=3 = after OP_COLON (elem 1 ident, 2 the dot-lower group, 3 OP_COLON). Safe inside the
+// `whereMethod | whereAlias` choice: whereAlias is dot-UPPER with no colon, already excluded by
+// elem 2, so pinning the colon only rescues a missing typeAnno it could never have matched.
+whereMethod ::= LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLON typeAnno { pin=3 }
 whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
 
 // == declarations ===========================================
@@ -433,7 +438,9 @@ private tupleTypeElem ::= !RPAREN typeAnno (COMMA | &RPAREN) { pin=1 recoverWhil
 // `!(RBRACE | DOUBLE_DOT)` guard ends the field loop at `}` or the ext.
 recordType ::= LBRACE recordTypeElem* (recordTypeExt COMMA?)? RBRACE { pin=1 }
 private recordTypeElem ::= !(RBRACE | DOUBLE_DOT) recordTypeField (COMMA | &(RBRACE | DOUBLE_DOT)) { pin=1 recoverWhile=recordTypeFieldRecover }
-recordTypeField ::= LOWER_IDENT OP_COLON typeAnno
+// pin=2 = after OP_COLON. `name :` keeps a partial RECORD_TYPE_FIELD (typeAnno error nested)
+// instead of recordTypeElem's recoverWhile eating `name :` as junk.
+recordTypeField ::= LOWER_IDENT OP_COLON typeAnno { pin=2 }
 recordTypeExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
 
 // [Ok(a), Err(b), ..ext] — open-union extension must be last (Parser.zig 3836), same shape as
@@ -658,10 +665,13 @@ platformRequires ::= LBRACE RBRACE requiresBrace | requiresBrace
 private requiresBrace ::= LBRACE requiresElem* RBRACE { pin=1 }
 private requiresElem  ::= !RBRACE requiresEntry (COMMA | &RBRACE) { pin=1 recoverWhile=requiresRecover }
 // `main! : Type`, optionally prefixed by a for-clause `[Model : model] for`.
-requiresEntry     ::= requiresForClause? LOWER_IDENT OP_COLON typeAnno
+// pin=3 = after OP_COLON (elem 1 the optional for-clause, 2 ident, 3 OP_COLON). Keeps a partial
+// REQUIRES_ENTRY (typeAnno error nested) instead of requiresElem's recoverWhile eating it as junk.
+requiresEntry     ::= requiresForClause? LOWER_IDENT OP_COLON typeAnno { pin=3 }
 requiresForClause ::= LBRACK requiresForElem+ RBRACK KW_FOR { pin=1 }
 private requiresForElem ::= !RBRACK requiresForAlias (COMMA | &RBRACK) { pin=1 recoverWhile=requiresForRecover }
-requiresForAlias  ::= UPPER_IDENT OP_COLON LOWER_IDENT
+// pin=2 = after OP_COLON. `Alias :` keeps a partial REQUIRES_FOR_ALIAS (ident-expected nested).
+requiresForAlias  ::= UPPER_IDENT OP_COLON LOWER_IDENT { pin=2 }
 
 // `provides { name: <expr>, … }` — record-style, unlike the app header's `[ … ]` provides.
 // Values are expressions (a string path in practice).
@@ -674,7 +684,9 @@ platformProvidesField ::= LOWER_IDENT (OP_COLON expr)?
 // entry maps a triple name to a bracketed file list of strings / idents / `app`.
 platformTargets ::= KW_TARGETS OP_COLON LBRACE targetsElem* RBRACE { pin=3 }
 private targetsElem ::= !RBRACE targetsField (COMMA | &RBRACE) { pin=1 recoverWhile=braceLowerIdentRecover }
-targetsField    ::= LOWER_IDENT OP_COLON (string | targetLinkType)
+// pin=2 = after OP_COLON. `name :` keeps a partial TARGETS_FIELD (value error nested) instead
+// of targetsElem's recoverWhile eating `name :` as junk.
+targetsField    ::= LOWER_IDENT OP_COLON (string | targetLinkType) { pin=2 }
 targetLinkType  ::= LBRACE targetLinkElem* RBRACE { pin=1 }
 private targetLinkElem ::= !RBRACE targetLinkEntry (COMMA | &RBRACE) { pin=1 recoverWhile=braceLowerIdentRecover }
 targetLinkEntry ::= LOWER_IDENT OP_COLON LBRACK targetFileElem* RBRACK { pin=3 }

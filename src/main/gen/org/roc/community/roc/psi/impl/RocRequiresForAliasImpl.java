@@ -28,9 +28,9 @@ public class RocRequiresForAliasImpl extends ASTWrapperPsiElement implements Roc
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getLowerIdent() {
-    return findNotNullChildByType(LOWER_IDENT);
+    return findChildByType(LOWER_IDENT);
   }
 
   @Override

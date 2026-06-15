@@ -1,0 +1,19 @@
+FILE
+  RocHeaderImpl(HEADER)
+    RocPackageHeaderImpl(PACKAGE_HEADER)
+      PsiElement(package)('package')
+      PsiWhiteSpace(' ')
+      RocExposesImpl(EXPOSES)
+        PsiElement([)('[')
+        PsiElement(])(']')
+      PsiWhiteSpace(' ')
+      RocPackagesImpl(PACKAGES)
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        RocPackageEntryImpl(PACKAGE_ENTRY)
+          PsiElement(LOWER_IDENT)('pf')
+          PsiElement(:)(':')
+          PsiErrorElement:platform expected, got '}'
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')
