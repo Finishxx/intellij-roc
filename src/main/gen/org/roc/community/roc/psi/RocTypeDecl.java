@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RocTypeDecl extends PsiElement {
 
   @Nullable
+  RocAssociatedBlock getAssociatedBlock();
+
+  @Nullable
   RocFunctionType getFunctionType();
 
   @Nullable

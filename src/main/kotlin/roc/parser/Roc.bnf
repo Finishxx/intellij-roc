@@ -208,7 +208,18 @@ valueAnnotation ::= KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno w
 // `Name(a) : T` (alias) | `Name(a) := T` (nominal) | `Name(a) :: T` (opaque).
 
 // Params are PARENTHESISED type vars (parseTypeIdent) — the old space-separated
-typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause?
+typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause? associatedBlock?
+
+// Associated items `.{ … }` on a nominal/opaque decl (Parser.zig 2047). `.{` is DOT + LBRACE (the lexer
+// has no combined token; the bare `.` is plain DOT because `{` is not an ident char). Holds the
+// reference's "associated types and values" — annotations, value decls, nested type decls. Items are
+// private so VALUE_ANNOTATION / VALUE_DECL / TYPE_DECL attach directly under ASSOCIATED_BLOCK (like
+// blockStmt), and reuse the existing decl-vs-anno rollback ordering. Semantic-only rules deferred to a
+// later phase: alias may not carry a block (type_alias_cannot_have_associated); the last item may not be
+// a bare expr (nominal_associated_cannot_have_final_expression) — hence no `expr` arm here.
+associatedBlock ::= DOT LBRACE associatedItem* RBRACE
+private associatedItem ::= valueAnnotation | typeDecl | valueDecl
+
 typeHeader     ::= UPPER_IDENT typeHeaderArgs?
 typeHeaderArgs ::= (NO_SPACE_LPAREN | LPAREN) (typeParam (COMMA typeParam)* COMMA?)? RPAREN
 // A type parameter is the DECLARATION site of a type variable (uses appear as
@@ -370,7 +381,7 @@ expr ::= orExpr
        | tupleAccessExpr
        | arrowCallExpr        // postfix `->` arrow-call (M5)
        | questionSuffixExpr   // postfix `?` (NO_SPACE_OP_QUESTION)
-       | intLiteral | floatLiteral | charLiteral | string | multilineStringExpr
+       | typedIntLiteral | typedFloatLiteral | intLiteral | floatLiteral | charLiteral | string | multilineStringExpr
        | qualifiedNameExpr | tagExpr | identExpr
        | ellipsisExpr         // `...`
        | ifExpr | matchExpr | forExpr | lambdaExpr | dbgExpr   // control flow (M4e/M4f)
@@ -432,7 +443,15 @@ private arrowCallTarget ::= (qualifiedNameExpr | tagExpr | identExpr | tupleExpr
 private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
 
 // Separate nodes (not one literalExpr) to mirror the reference's .int / .frac / single-quote
-// — keeps later type-inference/inspections a direct match. Multiline + typed suffixes later.
+// — keeps later type-inference/inspections a direct match. Multiline is multilineStringExpr;
+// typed numeric suffixes are the two rules below.
+// Typed numeric literal `5.U8` / `3.0.F64` — the reference's typed_int / typed_frac (Parser.zig 2790,
+// 2831): an INT/FLOAT immediately followed (no space) by NO_SPACE_DOT_UPPER_IDENT. A primary-level form
+// bound to a bare numeric token, NOT a general postfix (so `(1+2).U8` is not this). Listed before the
+// plain literals in `expr` so the suffixed form wins when `.Type` is present; falls through to
+// intLiteral for a bare `5`. Distinct nodes mirror the reference's typed_int / typed_frac.
+typedIntLiteral   ::= INT   NO_SPACE_DOT_UPPER_IDENT
+typedFloatLiteral ::= FLOAT NO_SPACE_DOT_UPPER_IDENT
 intLiteral   ::= INT
 floatLiteral ::= FLOAT
 charLiteral  ::= SINGLE_QUOTE

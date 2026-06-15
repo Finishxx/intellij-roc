@@ -23,6 +23,10 @@ public class RocVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitAssociatedBlock(@NotNull RocAssociatedBlock o) {
+    visitPsiElement(o);
+  }
+
   public void visitBinaryExpr(@NotNull RocBinaryExpr o) {
     visitExpr(o);
   }
@@ -353,6 +357,14 @@ public class RocVisitor extends PsiElementVisitor {
 
   public void visitTypeReference(@NotNull RocTypeReference o) {
     visitPsiElement(o);
+  }
+
+  public void visitTypedFloatLiteral(@NotNull RocTypedFloatLiteral o) {
+    visitExpr(o);
+  }
+
+  public void visitTypedIntLiteral(@NotNull RocTypedIntLiteral o) {
+    visitExpr(o);
   }
 
   public void visitUnaryExpr(@NotNull RocUnaryExpr o) {

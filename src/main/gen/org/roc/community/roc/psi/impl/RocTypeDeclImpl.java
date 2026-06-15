@@ -29,6 +29,12 @@ public class RocTypeDeclImpl extends ASTWrapperPsiElement implements RocTypeDecl
 
   @Override
   @Nullable
+  public RocAssociatedBlock getAssociatedBlock() {
+    return findChildByClass(RocAssociatedBlock.class);
+  }
+
+  @Override
+  @Nullable
   public RocFunctionType getFunctionType() {
     return findChildByClass(RocFunctionType.class);
   }

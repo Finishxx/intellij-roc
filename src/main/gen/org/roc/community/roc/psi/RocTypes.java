@@ -11,6 +11,7 @@ public interface RocTypes {
   IElementType ALTERNATIVES_PATTERN = new RocElementType("ALTERNATIVES_PATTERN");
   IElementType APP_HEADER = new RocElementType("APP_HEADER");
   IElementType ARROW_CALL_EXPR = new RocElementType("ARROW_CALL_EXPR");
+  IElementType ASSOCIATED_BLOCK = new RocElementType("ASSOCIATED_BLOCK");
   IElementType AS_PATTERN = new RocElementType("AS_PATTERN");
   IElementType BINARY_EXPR = new RocElementType("BINARY_EXPR");
   IElementType BLOCK_EXPR = new RocElementType("BLOCK_EXPR");
@@ -89,6 +90,8 @@ public interface RocTypes {
   IElementType TUPLE_EXPR = new RocElementType("TUPLE_EXPR");
   IElementType TUPLE_PATTERN = new RocElementType("TUPLE_PATTERN");
   IElementType TUPLE_TYPE = new RocElementType("TUPLE_TYPE");
+  IElementType TYPED_FLOAT_LITERAL = new RocElementType("TYPED_FLOAT_LITERAL");
+  IElementType TYPED_INT_LITERAL = new RocElementType("TYPED_INT_LITERAL");
   IElementType TYPE_ARGUMENTS = new RocElementType("TYPE_ARGUMENTS");
   IElementType TYPE_DECL = new RocElementType("TYPE_DECL");
   IElementType TYPE_HEADER = new RocElementType("TYPE_HEADER");
@@ -213,6 +216,9 @@ public interface RocTypes {
       }
       else if (type == ARROW_CALL_EXPR) {
         return new RocArrowCallExprImpl(node);
+      }
+      else if (type == ASSOCIATED_BLOCK) {
+        return new RocAssociatedBlockImpl(node);
       }
       else if (type == AS_PATTERN) {
         return new RocAsPatternImpl(node);
@@ -444,6 +450,12 @@ public interface RocTypes {
       }
       else if (type == TUPLE_TYPE) {
         return new RocTupleTypeImpl(node);
+      }
+      else if (type == TYPED_FLOAT_LITERAL) {
+        return new RocTypedFloatLiteralImpl(node);
+      }
+      else if (type == TYPED_INT_LITERAL) {
+        return new RocTypedIntLiteralImpl(node);
       }
       else if (type == TYPE_ARGUMENTS) {
         return new RocTypeArgumentsImpl(node);
