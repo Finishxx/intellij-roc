@@ -1,0 +1,18 @@
+FILE
+  RocHeaderImpl(HEADER)
+    RocModuleHeaderImpl(MODULE_HEADER)
+      PsiElement(module)('module')
+      PsiWhiteSpace(' ')
+      RocExposesImpl(EXPOSES)
+        PsiElement([)('[')
+        RocExposedItemImpl(EXPOSED_ITEM)
+          PsiElement(LOWER_IDENT)('foo')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        PsiErrorElement:'1' unexpected
+          PsiElement(INT)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        RocExposedItemImpl(EXPOSED_ITEM)
+          PsiElement(LOWER_IDENT)('bar')
+        PsiElement(])(']')

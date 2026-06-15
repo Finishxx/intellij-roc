@@ -485,4 +485,35 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testDemoTopLevelExpect() = doTest(true)
+
+    // -- error recovery: comma/bracket lists (pin + recoverWhile; see Roc.bnf) --
+    // Each golden should keep the container node (LIST_EXPR / CALL_EXPR / exposes list) with
+    // a contained PsiErrorElement, instead of collapsing the rest of the file into one error.
+
+    @Test
+    fun testRecoverUnclosedList() = doTest(true)
+
+    @Test
+    fun testRecoverListBadElement() = doTest(true)
+
+    @Test
+    fun testRecoverUnclosedCall() = doTest(true)
+
+    @Test
+    fun testRecoverExposesBadItem() = doTest(true)
+
+    @Test
+    fun testRecoverTuplePatternBad() = doTest(true)
+
+    @Test
+    fun testRecoverRecordPatternBad() = doTest(true)
+
+    @Test
+    fun testRecoverTypeArgBad() = doTest(true)
+
+    @Test
+    fun testRecoverRecordTypeBad() = doTest(true)
+
+    @Test
+    fun testRecoverTagUnionBad() = doTest(true)
 }

@@ -233,64 +233,73 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
-  static boolean callArgs(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs")) return false;
-    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+  // !RPAREN expr (COMMA | &RPAREN)
+  static boolean callArg(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArg")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = callArg_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr(b, l + 1, -1));
+    r = p && callArg_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::exprParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean callArg_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArg_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, NO_SPACE_LPAREN);
-    r = r && callArgs_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (expr (COMMA expr)* COMMA?)?
-  private static boolean callArgs_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs_1")) return false;
-    callArgs_1_0(b, l + 1);
-    return true;
-  }
-
-  // expr (COMMA expr)* COMMA?
-  private static boolean callArgs_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    r = r && callArgs_1_0_1(b, l + 1);
-    r = r && callArgs_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA expr)*
-  private static boolean callArgs_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!callArgs_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "callArgs_1_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA expr
-  private static boolean callArgs_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs_1_0_1_0")) return false;
+  // COMMA | &RPAREN
+  private static boolean callArg_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArg_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && expr(b, l + 1, -1);
+    if (!r) r = callArg_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean callArgs_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "callArgs_1_0_2")) return false;
-    consumeToken(b, COMMA);
+  // &RPAREN
+  private static boolean callArg_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArg_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NO_SPACE_LPAREN callArg* RPAREN
+  static boolean callArgs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArgs")) return false;
+    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, NO_SPACE_LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, callArgs_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // callArg*
+  private static boolean callArgs_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callArgs_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!callArg(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "callArgs_1", c)) break;
+    }
     return true;
   }
 
@@ -392,65 +401,105 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACK (exposedItem (COMMA exposedItem)* COMMA?)? RBRACK
+  // LOWER_IDENT | UPPER_IDENT
+  static boolean exposedItemFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedItemFirst")) return false;
+    if (!nextTokenIs(b, "", LOWER_IDENT, UPPER_IDENT)) return false;
+    boolean r;
+    r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, UPPER_IDENT);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RBRACK | exposedItemFirst)
+  static boolean exposedItemRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedItemRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !exposedItemRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACK | exposedItemFirst
+  private static boolean exposedItemRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedItemRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = exposedItemFirst(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LBRACK exposedListElem* RBRACK
   static boolean exposedList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "exposedList")) return false;
     if (!nextTokenIs(b, LBRACK)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LBRACK);
-    r = r && exposedList_1(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, exposedList_1(b, l + 1));
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (exposedItem (COMMA exposedItem)* COMMA?)?
+  // exposedListElem*
   private static boolean exposedList_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "exposedList_1")) return false;
-    exposedList_1_0(b, l + 1);
-    return true;
-  }
-
-  // exposedItem (COMMA exposedItem)* COMMA?
-  private static boolean exposedList_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exposedList_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = exposedItem(b, l + 1);
-    r = r && exposedList_1_0_1(b, l + 1);
-    r = r && exposedList_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA exposedItem)*
-  private static boolean exposedList_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exposedList_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!exposedList_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "exposedList_1_0_1", c)) break;
+      if (!exposedListElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "exposedList_1", c)) break;
     }
     return true;
   }
 
-  // COMMA exposedItem
-  private static boolean exposedList_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exposedList_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RBRACK exposedItem (COMMA | &RBRACK)
+  static boolean exposedListElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedListElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = exposedListElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, exposedItem(b, l + 1));
+    r = p && exposedListElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::exposedItemRecover);
+    return r || p;
+  }
+
+  // !RBRACK
+  private static boolean exposedListElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedListElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RBRACK
+  private static boolean exposedListElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedListElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && exposedItem(b, l + 1);
+    if (!r) r = exposedListElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean exposedList_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "exposedList_1_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  // &RBRACK
+  private static boolean exposedListElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exposedListElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -462,6 +511,78 @@ public class RocParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = exposedList(b, l + 1);
     exit_section_(b, m, EXPOSES, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RBRACK | exprFirst)
+  static boolean exprBracketRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exprBracketRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !exprBracketRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACK | exprFirst
+  private static boolean exprBracketRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exprBracketRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = exprFirst(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // INT | FLOAT | SINGLE_QUOTE | STRING_START | MULTILINE_STRING_START
+  //                     | LOWER_IDENT | UPPER_IDENT | NAMED_UNDERSCORE | TRIPLE_DOT
+  //                     | KW_IF | KW_MATCH | KW_FOR | KW_DBG | OP_BAR
+  //                     | OP_UNARY_MINUS | OP_BANG
+  //                     | LBRACK | LBRACE | NO_SPACE_LPAREN | LPAREN
+  static boolean exprFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exprFirst")) return false;
+    boolean r;
+    r = consumeToken(b, INT);
+    if (!r) r = consumeToken(b, FLOAT);
+    if (!r) r = consumeToken(b, SINGLE_QUOTE);
+    if (!r) r = consumeToken(b, STRING_START);
+    if (!r) r = consumeToken(b, MULTILINE_STRING_START);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, UPPER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    if (!r) r = consumeToken(b, TRIPLE_DOT);
+    if (!r) r = consumeToken(b, KW_IF);
+    if (!r) r = consumeToken(b, KW_MATCH);
+    if (!r) r = consumeToken(b, KW_FOR);
+    if (!r) r = consumeToken(b, KW_DBG);
+    if (!r) r = consumeToken(b, OP_BAR);
+    if (!r) r = consumeToken(b, OP_UNARY_MINUS);
+    if (!r) r = consumeToken(b, OP_BANG);
+    if (!r) r = consumeToken(b, LBRACK);
+    if (!r) r = consumeToken(b, LBRACE);
+    if (!r) r = consumeToken(b, NO_SPACE_LPAREN);
+    if (!r) r = consumeToken(b, LPAREN);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RPAREN | exprFirst)
+  static boolean exprParenRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exprParenRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !exprParenRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RPAREN | exprFirst
+  private static boolean exprParenRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "exprParenRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RPAREN);
+    if (!r) r = exprFirst(b, l + 1);
     return r;
   }
 
@@ -638,74 +759,127 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACK (listPatternElem (COMMA listPatternElem)* COMMA?)? RBRACK
-  public static boolean listPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern")) return false;
-    if (!nextTokenIs(b, LBRACK)) return false;
+  // !RBRACK expr (COMMA | &RBRACK)
+  static boolean listExprElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listExprElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = listExprElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr(b, l + 1, -1));
+    r = p && listExprElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::exprBracketRecover);
+    return r || p;
+  }
+
+  // !RBRACK
+  private static boolean listExprElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listExprElem_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACK);
-    r = r && listPattern_1(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, LIST_PATTERN, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (listPatternElem (COMMA listPatternElem)* COMMA?)?
-  private static boolean listPattern_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern_1")) return false;
-    listPattern_1_0(b, l + 1);
-    return true;
-  }
-
-  // listPatternElem (COMMA listPatternElem)* COMMA?
-  private static boolean listPattern_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern_1_0")) return false;
+  // COMMA | &RBRACK
+  private static boolean listExprElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listExprElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = listPatternElem(b, l + 1);
-    r = r && listPattern_1_0_1(b, l + 1);
-    r = r && listPattern_1_0_2(b, l + 1);
+    r = consumeToken(b, COMMA);
+    if (!r) r = listExprElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (COMMA listPatternElem)*
-  private static boolean listPattern_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern_1_0_1")) return false;
+  // &RBRACK
+  private static boolean listExprElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listExprElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LBRACK listPatternElem* RBRACK
+  public static boolean listPattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPattern")) return false;
+    if (!nextTokenIs(b, LBRACK)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, LIST_PATTERN, null);
+    r = consumeToken(b, LBRACK);
+    p = r; // pin = 1
+    r = r && report_error_(b, listPattern_1(b, l + 1));
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // listPatternElem*
+  private static boolean listPattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPattern_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!listPattern_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "listPattern_1_0_1", c)) break;
+      if (!listPatternElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "listPattern_1", c)) break;
     }
     return true;
   }
 
-  // COMMA listPatternElem
-  private static boolean listPattern_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RBRACK (listRestPattern | pattern) (COMMA | &RBRACK)
+  static boolean listPatternElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPatternElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = listPatternElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, listPatternElem_1(b, l + 1));
+    r = p && listPatternElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::patternBracketRecover);
+    return r || p;
+  }
+
+  // !RBRACK
+  private static boolean listPatternElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPatternElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // listRestPattern | pattern
+  private static boolean listPatternElem_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPatternElem_1")) return false;
+    boolean r;
+    r = listRestPattern(b, l + 1);
+    if (!r) r = pattern(b, l + 1);
+    return r;
+  }
+
+  // COMMA | &RBRACK
+  private static boolean listPatternElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPatternElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && listPatternElem(b, l + 1);
+    if (!r) r = listPatternElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean listPattern_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPattern_1_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // listRestPattern | pattern
-  static boolean listPatternElem(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listPatternElem")) return false;
+  // &RBRACK
+  private static boolean listPatternElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "listPatternElem_2_1")) return false;
     boolean r;
-    r = listRestPattern(b, l + 1);
-    if (!r) r = pattern(b, l + 1);
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -1025,12 +1199,75 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // !(RBRACK | DOUBLE_DOT | patternFirst)
+  static boolean patternBracketRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "patternBracketRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !patternBracketRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACK | DOUBLE_DOT | patternFirst
+  private static boolean patternBracketRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "patternBracketRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    if (!r) r = patternFirst(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // UNDERSCORE | LOWER_IDENT | NAMED_UNDERSCORE | UPPER_IDENT
+  //                        | INT | FLOAT | SINGLE_QUOTE | STRING_START
+  //                        | LBRACK | LBRACE | NO_SPACE_LPAREN | LPAREN
+  static boolean patternFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "patternFirst")) return false;
+    boolean r;
+    r = consumeToken(b, UNDERSCORE);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    if (!r) r = consumeToken(b, UPPER_IDENT);
+    if (!r) r = consumeToken(b, INT);
+    if (!r) r = consumeToken(b, FLOAT);
+    if (!r) r = consumeToken(b, SINGLE_QUOTE);
+    if (!r) r = consumeToken(b, STRING_START);
+    if (!r) r = consumeToken(b, LBRACK);
+    if (!r) r = consumeToken(b, LBRACE);
+    if (!r) r = consumeToken(b, NO_SPACE_LPAREN);
+    if (!r) r = consumeToken(b, LPAREN);
+    return r;
+  }
+
+  /* ********************************************************** */
   // asPattern | patternPrimary
   static boolean patternNoAlts(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "patternNoAlts")) return false;
     boolean r;
     r = asPattern(b, l + 1);
     if (!r) r = patternPrimary(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RPAREN | patternFirst)
+  static boolean patternParenRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "patternParenRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !patternParenRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RPAREN | patternFirst
+  private static boolean patternParenRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "patternParenRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RPAREN);
+    if (!r) r = patternFirst(b, l + 1);
     return r;
   }
 
@@ -1511,65 +1748,74 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE (recordPatternField (COMMA recordPatternField)* COMMA?)? RBRACE
+  // LBRACE recordPatternElem* RBRACE
   public static boolean recordPattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "recordPattern")) return false;
     if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, RECORD_PATTERN, null);
     r = consumeToken(b, LBRACE);
-    r = r && recordPattern_1(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, RECORD_PATTERN, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, recordPattern_1(b, l + 1));
+    r = p && consumeToken(b, RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (recordPatternField (COMMA recordPatternField)* COMMA?)?
+  // recordPatternElem*
   private static boolean recordPattern_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "recordPattern_1")) return false;
-    recordPattern_1_0(b, l + 1);
-    return true;
-  }
-
-  // recordPatternField (COMMA recordPatternField)* COMMA?
-  private static boolean recordPattern_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordPattern_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = recordPatternField(b, l + 1);
-    r = r && recordPattern_1_0_1(b, l + 1);
-    r = r && recordPattern_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA recordPatternField)*
-  private static boolean recordPattern_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordPattern_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!recordPattern_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "recordPattern_1_0_1", c)) break;
+      if (!recordPatternElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "recordPattern_1", c)) break;
     }
     return true;
   }
 
-  // COMMA recordPatternField
-  private static boolean recordPattern_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordPattern_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RBRACE recordPatternField (COMMA | &RBRACE)
+  static boolean recordPatternElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = recordPatternElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, recordPatternField(b, l + 1));
+    r = p && recordPatternElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::recordPatternRecover);
+    return r || p;
+  }
+
+  // !RBRACE
+  private static boolean recordPatternElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RBRACE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RBRACE
+  private static boolean recordPatternElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && recordPatternField(b, l + 1);
+    if (!r) r = recordPatternElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean recordPattern_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordPattern_1_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  // &RBRACE
+  private static boolean recordPatternElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1634,98 +1880,139 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACE recordTypeBody? RBRACE
-  public static boolean recordType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordType")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
+  // !(RBRACE | DOUBLE_DOT | LOWER_IDENT)
+  static boolean recordPatternRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternRecover")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && recordType_1(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, RECORD_TYPE, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !recordPatternRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // recordTypeBody?
-  private static boolean recordType_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordType_1")) return false;
-    recordTypeBody(b, l + 1);
-    return true;
+  // RBRACE | DOUBLE_DOT | LOWER_IDENT
+  private static boolean recordPatternRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordPatternRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACE);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
+    return r;
   }
 
   /* ********************************************************** */
-  // recordTypeField (COMMA recordTypeField)* (COMMA recordTypeExt)? COMMA?
-  //                          | recordTypeExt
-  static boolean recordTypeBody(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody")) return false;
-    if (!nextTokenIs(b, "", DOUBLE_DOT, LOWER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = recordTypeBody_0(b, l + 1);
-    if (!r) r = recordTypeExt(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+  // LBRACE recordTypeElem* (recordTypeExt COMMA?)? RBRACE
+  public static boolean recordType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordType")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, RECORD_TYPE, null);
+    r = consumeToken(b, LBRACE);
+    p = r; // pin = 1
+    r = r && report_error_(b, recordType_1(b, l + 1));
+    r = p && report_error_(b, recordType_2(b, l + 1)) && r;
+    r = p && consumeToken(b, RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // recordTypeField (COMMA recordTypeField)* (COMMA recordTypeExt)? COMMA?
-  private static boolean recordTypeBody_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = recordTypeField(b, l + 1);
-    r = r && recordTypeBody_0_1(b, l + 1);
-    r = r && recordTypeBody_0_2(b, l + 1);
-    r = r && recordTypeBody_0_3(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA recordTypeField)*
-  private static boolean recordTypeBody_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0_1")) return false;
+  // recordTypeElem*
+  private static boolean recordType_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordType_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!recordTypeBody_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "recordTypeBody_0_1", c)) break;
+      if (!recordTypeElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "recordType_1", c)) break;
     }
     return true;
   }
 
-  // COMMA recordTypeField
-  private static boolean recordTypeBody_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && recordTypeField(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA recordTypeExt)?
-  private static boolean recordTypeBody_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0_2")) return false;
-    recordTypeBody_0_2_0(b, l + 1);
+  // (recordTypeExt COMMA?)?
+  private static boolean recordType_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordType_2")) return false;
+    recordType_2_0(b, l + 1);
     return true;
   }
 
-  // COMMA recordTypeExt
-  private static boolean recordTypeBody_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0_2_0")) return false;
+  // recordTypeExt COMMA?
+  private static boolean recordType_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordType_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && recordTypeExt(b, l + 1);
+    r = recordTypeExt(b, l + 1);
+    r = r && recordType_2_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // COMMA?
-  private static boolean recordTypeBody_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "recordTypeBody_0_3")) return false;
+  private static boolean recordType_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordType_2_0_1")) return false;
     consumeToken(b, COMMA);
     return true;
+  }
+
+  /* ********************************************************** */
+  // !(RBRACE | DOUBLE_DOT) recordTypeField (COMMA | &(RBRACE | DOUBLE_DOT))
+  static boolean recordTypeElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = recordTypeElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, recordTypeField(b, l + 1));
+    r = p && recordTypeElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::recordTypeFieldRecover);
+    return r || p;
+  }
+
+  // !(RBRACE | DOUBLE_DOT)
+  private static boolean recordTypeElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !recordTypeElem_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACE | DOUBLE_DOT
+  private static boolean recordTypeElem_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem_0_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACE);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    return r;
+  }
+
+  // COMMA | &(RBRACE | DOUBLE_DOT)
+  private static boolean recordTypeElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = recordTypeElem_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &(RBRACE | DOUBLE_DOT)
+  private static boolean recordTypeElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = recordTypeElem_2_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACE | DOUBLE_DOT
+  private static boolean recordTypeElem_2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeElem_2_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACE);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1767,6 +2054,27 @@ public class RocParser implements PsiParser, LightPsiParser {
     r = consumeTokens(b, 0, LOWER_IDENT, OP_COLON);
     r = r && typeAnno(b, l + 1);
     exit_section_(b, m, RECORD_TYPE_FIELD, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RBRACE | DOUBLE_DOT | LOWER_IDENT)
+  static boolean recordTypeFieldRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeFieldRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !recordTypeFieldRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACE | DOUBLE_DOT | LOWER_IDENT
+  private static boolean recordTypeFieldRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "recordTypeFieldRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACE);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
     return r;
   }
 
@@ -1999,139 +2307,137 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NO_SPACE_LPAREN (pattern (COMMA pattern)* COMMA?)? RPAREN
-  public static boolean tagPatternArgs(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs")) return false;
-    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+  // !RPAREN pattern (COMMA | &RPAREN)
+  static boolean tagPatternArg(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArg")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = tagPatternArg_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, pattern(b, l + 1));
+    r = p && tagPatternArg_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::patternParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean tagPatternArg_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArg_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, NO_SPACE_LPAREN);
-    r = r && tagPatternArgs_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, TAG_PATTERN_ARGS, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (pattern (COMMA pattern)* COMMA?)?
-  private static boolean tagPatternArgs_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs_1")) return false;
-    tagPatternArgs_1_0(b, l + 1);
-    return true;
-  }
-
-  // pattern (COMMA pattern)* COMMA?
-  private static boolean tagPatternArgs_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pattern(b, l + 1);
-    r = r && tagPatternArgs_1_0_1(b, l + 1);
-    r = r && tagPatternArgs_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA pattern)*
-  private static boolean tagPatternArgs_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!tagPatternArgs_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tagPatternArgs_1_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA pattern
-  private static boolean tagPatternArgs_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs_1_0_1_0")) return false;
+  // COMMA | &RPAREN
+  private static boolean tagPatternArg_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArg_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && pattern(b, l + 1);
+    if (!r) r = tagPatternArg_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean tagPatternArgs_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagPatternArgs_1_0_2")) return false;
-    consumeToken(b, COMMA);
+  // &RPAREN
+  private static boolean tagPatternArg_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArg_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NO_SPACE_LPAREN tagPatternArg* RPAREN
+  public static boolean tagPatternArgs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArgs")) return false;
+    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TAG_PATTERN_ARGS, null);
+    r = consumeToken(b, NO_SPACE_LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, tagPatternArgs_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // tagPatternArg*
+  private static boolean tagPatternArgs_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagPatternArgs_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!tagPatternArg(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tagPatternArgs_1", c)) break;
+    }
     return true;
   }
 
   /* ********************************************************** */
-  // tagUnionMember (COMMA tagUnionMember)* (COMMA tagUnionExt)? COMMA?
-  //                        | tagUnionExt
-  static boolean tagUnionBody(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody")) return false;
-    if (!nextTokenIs(b, "", DOUBLE_DOT, UPPER_IDENT)) return false;
+  // !(RBRACK | DOUBLE_DOT) tagUnionMember (COMMA | &(RBRACK | DOUBLE_DOT))
+  static boolean tagUnionElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = tagUnionElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, tagUnionMember(b, l + 1));
+    r = p && tagUnionElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::tagUnionMemberRecover);
+    return r || p;
+  }
+
+  // !(RBRACK | DOUBLE_DOT)
+  private static boolean tagUnionElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = tagUnionBody_0(b, l + 1);
-    if (!r) r = tagUnionExt(b, l + 1);
-    exit_section_(b, m, null, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !tagUnionElem_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // tagUnionMember (COMMA tagUnionMember)* (COMMA tagUnionExt)? COMMA?
-  private static boolean tagUnionBody_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0")) return false;
+  // RBRACK | DOUBLE_DOT
+  private static boolean tagUnionElem_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = tagUnionMember(b, l + 1);
-    r = r && tagUnionBody_0_1(b, l + 1);
-    r = r && tagUnionBody_0_2(b, l + 1);
-    r = r && tagUnionBody_0_3(b, l + 1);
-    exit_section_(b, m, null, r);
+    r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
     return r;
   }
 
-  // (COMMA tagUnionMember)*
-  private static boolean tagUnionBody_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!tagUnionBody_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tagUnionBody_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA tagUnionMember
-  private static boolean tagUnionBody_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0_1_0")) return false;
+  // COMMA | &(RBRACK | DOUBLE_DOT)
+  private static boolean tagUnionElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && tagUnionMember(b, l + 1);
+    if (!r) r = tagUnionElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (COMMA tagUnionExt)?
-  private static boolean tagUnionBody_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0_2")) return false;
-    tagUnionBody_0_2_0(b, l + 1);
-    return true;
-  }
-
-  // COMMA tagUnionExt
-  private static boolean tagUnionBody_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0_2_0")) return false;
+  // &(RBRACK | DOUBLE_DOT)
+  private static boolean tagUnionElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem_2_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && tagUnionExt(b, l + 1);
-    exit_section_(b, m, null, r);
+    Marker m = enter_section_(b, l, _AND_);
+    r = tagUnionElem_2_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // COMMA?
-  private static boolean tagUnionBody_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionBody_0_3")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  // RBRACK | DOUBLE_DOT
+  private static boolean tagUnionElem_2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionElem_2_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2184,23 +2490,75 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACK tagUnionBody? RBRACK
-  public static boolean tagUnionType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tagUnionType")) return false;
-    if (!nextTokenIs(b, LBRACK)) return false;
+  // !(RBRACK | DOUBLE_DOT | UPPER_IDENT)
+  static boolean tagUnionMemberRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionMemberRecover")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACK);
-    r = r && tagUnionType_1(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, TAG_UNION_TYPE, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !tagUnionMemberRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // tagUnionBody?
+  // RBRACK | DOUBLE_DOT | UPPER_IDENT
+  private static boolean tagUnionMemberRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionMemberRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, DOUBLE_DOT);
+    if (!r) r = consumeToken(b, UPPER_IDENT);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LBRACK tagUnionElem* (tagUnionExt COMMA?)? RBRACK
+  public static boolean tagUnionType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionType")) return false;
+    if (!nextTokenIs(b, LBRACK)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TAG_UNION_TYPE, null);
+    r = consumeToken(b, LBRACK);
+    p = r; // pin = 1
+    r = r && report_error_(b, tagUnionType_1(b, l + 1));
+    r = p && report_error_(b, tagUnionType_2(b, l + 1)) && r;
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // tagUnionElem*
   private static boolean tagUnionType_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tagUnionType_1")) return false;
-    tagUnionBody(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!tagUnionElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tagUnionType_1", c)) break;
+    }
+    return true;
+  }
+
+  // (tagUnionExt COMMA?)?
+  private static boolean tagUnionType_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionType_2")) return false;
+    tagUnionType_2_0(b, l + 1);
+    return true;
+  }
+
+  // tagUnionExt COMMA?
+  private static boolean tagUnionType_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionType_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = tagUnionExt(b, l + 1);
+    r = r && tagUnionType_2_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean tagUnionType_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tagUnionType_2_0_1")) return false;
+    consumeToken(b, COMMA);
     return true;
   }
 
@@ -2364,17 +2722,63 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (NO_SPACE_LPAREN | LPAREN) (pattern (COMMA pattern)* COMMA?)? RPAREN
+  // !RPAREN expr (COMMA | &RPAREN)
+  static boolean tupleExprElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleExprElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = tupleExprElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr(b, l + 1, -1));
+    r = p && tupleExprElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::exprParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean tupleExprElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleExprElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RPAREN
+  private static boolean tupleExprElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleExprElem_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = tupleExprElem_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &RPAREN
+  private static boolean tupleExprElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleExprElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // (NO_SPACE_LPAREN | LPAREN) tuplePatternElem* RPAREN
   public static boolean tuplePattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuplePattern")) return false;
     if (!nextTokenIs(b, "<tuple pattern>", LPAREN, NO_SPACE_LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TUPLE_PATTERN, "<tuple pattern>");
+    boolean r, p;
+    Marker m = enter_section_(b, l, _COLLAPSE_, TUPLE_PATTERN, "<tuple pattern>");
     r = tuplePattern_0(b, l + 1);
-    r = r && tuplePattern_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, tuplePattern_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // NO_SPACE_LPAREN | LPAREN
@@ -2386,66 +2790,75 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (pattern (COMMA pattern)* COMMA?)?
+  // tuplePatternElem*
   private static boolean tuplePattern_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuplePattern_1")) return false;
-    tuplePattern_1_0(b, l + 1);
-    return true;
-  }
-
-  // pattern (COMMA pattern)* COMMA?
-  private static boolean tuplePattern_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuplePattern_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pattern(b, l + 1);
-    r = r && tuplePattern_1_0_1(b, l + 1);
-    r = r && tuplePattern_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA pattern)*
-  private static boolean tuplePattern_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuplePattern_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!tuplePattern_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tuplePattern_1_0_1", c)) break;
+      if (!tuplePatternElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tuplePattern_1", c)) break;
     }
     return true;
   }
 
-  // COMMA pattern
-  private static boolean tuplePattern_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuplePattern_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RPAREN pattern (COMMA | &RPAREN)
+  static boolean tuplePatternElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuplePatternElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = tuplePatternElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, pattern(b, l + 1));
+    r = p && tuplePatternElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::patternParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean tuplePatternElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuplePatternElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RPAREN
+  private static boolean tuplePatternElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuplePatternElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && pattern(b, l + 1);
+    if (!r) r = tuplePatternElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean tuplePattern_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuplePattern_1_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  // &RPAREN
+  private static boolean tuplePatternElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuplePatternElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
-  // (NO_SPACE_LPAREN | LPAREN) (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
+  // (NO_SPACE_LPAREN | LPAREN) tupleTypeElem* RPAREN
   public static boolean tupleType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleType")) return false;
     if (!nextTokenIs(b, "<tuple type>", LPAREN, NO_SPACE_LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TUPLE_TYPE, "<tuple type>");
+    boolean r, p;
+    Marker m = enter_section_(b, l, _COLLAPSE_, TUPLE_TYPE, "<tuple type>");
     r = tupleType_0(b, l + 1);
-    r = r && tupleType_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, tupleType_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // NO_SPACE_LPAREN | LPAREN
@@ -2457,52 +2870,60 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (typeAnno (COMMA typeAnno)* COMMA?)?
+  // tupleTypeElem*
   private static boolean tupleType_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleType_1")) return false;
-    tupleType_1_0(b, l + 1);
-    return true;
-  }
-
-  // typeAnno (COMMA typeAnno)* COMMA?
-  private static boolean tupleType_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleType_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = typeAnno(b, l + 1);
-    r = r && tupleType_1_0_1(b, l + 1);
-    r = r && tupleType_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA typeAnno)*
-  private static boolean tupleType_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleType_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!tupleType_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tupleType_1_0_1", c)) break;
+      if (!tupleTypeElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tupleType_1", c)) break;
     }
     return true;
   }
 
-  // COMMA typeAnno
-  private static boolean tupleType_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleType_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RPAREN typeAnno (COMMA | &RPAREN)
+  static boolean tupleTypeElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleTypeElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = tupleTypeElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, typeAnno(b, l + 1));
+    r = p && tupleTypeElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::typeAnnoParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean tupleTypeElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleTypeElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RPAREN
+  private static boolean tupleTypeElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleTypeElem_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && typeAnno(b, l + 1);
+    if (!r) r = tupleTypeElem_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean tupleType_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleType_1_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  // &RPAREN
+  private static boolean tupleTypeElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tupleTypeElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2516,64 +2937,110 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NO_SPACE_LPAREN (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
-  public static boolean typeArguments(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments")) return false;
-    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+  // UPPER_IDENT | LOWER_IDENT | UNDERSCORE | NAMED_UNDERSCORE
+  //                         | LBRACE | LBRACK | NO_SPACE_LPAREN | LPAREN
+  static boolean typeAnnoFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeAnnoFirst")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, NO_SPACE_LPAREN);
-    r = r && typeArguments_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, TYPE_ARGUMENTS, r);
+    r = consumeToken(b, UPPER_IDENT);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, UNDERSCORE);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    if (!r) r = consumeToken(b, LBRACE);
+    if (!r) r = consumeToken(b, LBRACK);
+    if (!r) r = consumeToken(b, NO_SPACE_LPAREN);
+    if (!r) r = consumeToken(b, LPAREN);
     return r;
   }
 
-  // (typeAnno (COMMA typeAnno)* COMMA?)?
-  private static boolean typeArguments_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments_1")) return false;
-    typeArguments_1_0(b, l + 1);
-    return true;
-  }
-
-  // typeAnno (COMMA typeAnno)* COMMA?
-  private static boolean typeArguments_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments_1_0")) return false;
+  /* ********************************************************** */
+  // !(RPAREN | typeAnnoFirst)
+  static boolean typeAnnoParenRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeAnnoParenRecover")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = typeAnno(b, l + 1);
-    r = r && typeArguments_1_0_1(b, l + 1);
-    r = r && typeArguments_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !typeAnnoParenRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (COMMA typeAnno)*
-  private static boolean typeArguments_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!typeArguments_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "typeArguments_1_0_1", c)) break;
-    }
-    return true;
+  // RPAREN | typeAnnoFirst
+  private static boolean typeAnnoParenRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeAnnoParenRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RPAREN);
+    if (!r) r = typeAnnoFirst(b, l + 1);
+    return r;
   }
 
-  // COMMA typeAnno
-  private static boolean typeArguments_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments_1_0_1_0")) return false;
+  /* ********************************************************** */
+  // !RPAREN typeAnno (COMMA | &RPAREN)
+  static boolean typeArgument(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArgument")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = typeArgument_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, typeAnno(b, l + 1));
+    r = p && typeArgument_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::typeAnnoParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean typeArgument_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArgument_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RPAREN
+  private static boolean typeArgument_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArgument_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && typeAnno(b, l + 1);
+    if (!r) r = typeArgument_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean typeArguments_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeArguments_1_0_2")) return false;
-    consumeToken(b, COMMA);
+  // &RPAREN
+  private static boolean typeArgument_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArgument_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NO_SPACE_LPAREN typeArgument* RPAREN
+  public static boolean typeArguments(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArguments")) return false;
+    if (!nextTokenIs(b, NO_SPACE_LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TYPE_ARGUMENTS, null);
+    r = consumeToken(b, NO_SPACE_LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, typeArguments_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // typeArgument*
+  private static boolean typeArguments_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeArguments_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!typeArgument(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "typeArguments_1", c)) break;
+    }
     return true;
   }
 
@@ -2672,17 +3139,63 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (NO_SPACE_LPAREN | LPAREN) (typeParam (COMMA typeParam)* COMMA?)? RPAREN
+  // !RPAREN typeParam (COMMA | &RPAREN)
+  static boolean typeHeaderArg(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArg")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = typeHeaderArg_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, typeParam(b, l + 1));
+    r = p && typeHeaderArg_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::typeParamParenRecover);
+    return r || p;
+  }
+
+  // !RPAREN
+  private static boolean typeHeaderArg_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArg_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RPAREN
+  private static boolean typeHeaderArg_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArg_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = typeHeaderArg_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &RPAREN
+  private static boolean typeHeaderArg_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeHeaderArg_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // (NO_SPACE_LPAREN | LPAREN) typeHeaderArg* RPAREN
   public static boolean typeHeaderArgs(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeHeaderArgs")) return false;
     if (!nextTokenIs(b, "<type header args>", LPAREN, NO_SPACE_LPAREN)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, TYPE_HEADER_ARGS, "<type header args>");
     r = typeHeaderArgs_0(b, l + 1);
-    r = r && typeHeaderArgs_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, typeHeaderArgs_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // NO_SPACE_LPAREN | LPAREN
@@ -2694,51 +3207,14 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (typeParam (COMMA typeParam)* COMMA?)?
+  // typeHeaderArg*
   private static boolean typeHeaderArgs_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeHeaderArgs_1")) return false;
-    typeHeaderArgs_1_0(b, l + 1);
-    return true;
-  }
-
-  // typeParam (COMMA typeParam)* COMMA?
-  private static boolean typeHeaderArgs_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = typeParam(b, l + 1);
-    r = r && typeHeaderArgs_1_0_1(b, l + 1);
-    r = r && typeHeaderArgs_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA typeParam)*
-  private static boolean typeHeaderArgs_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!typeHeaderArgs_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "typeHeaderArgs_1_0_1", c)) break;
+      if (!typeHeaderArg(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "typeHeaderArgs_1", c)) break;
     }
-    return true;
-  }
-
-  // COMMA typeParam
-  private static boolean typeHeaderArgs_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && typeParam(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean typeHeaderArgs_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeHeaderArgs_1_0_2")) return false;
-    consumeToken(b, COMMA);
     return true;
   }
 
@@ -2785,6 +3261,37 @@ public class RocParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
     if (!r) r = consumeToken(b, UNDERSCORE);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LOWER_IDENT | NAMED_UNDERSCORE | UNDERSCORE
+  static boolean typeParamFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeParamFirst")) return false;
+    boolean r;
+    r = consumeToken(b, LOWER_IDENT);
+    if (!r) r = consumeToken(b, NAMED_UNDERSCORE);
+    if (!r) r = consumeToken(b, UNDERSCORE);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RPAREN | typeParamFirst)
+  static boolean typeParamParenRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeParamParenRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !typeParamParenRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RPAREN | typeParamFirst
+  private static boolean typeParamParenRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "typeParamParenRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RPAREN);
+    if (!r) r = typeParamFirst(b, l + 1);
     return r;
   }
 
@@ -2907,48 +3414,78 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_WHERE LBRACK whereClauseItem (COMMA whereClauseItem)* COMMA? RBRACK
+  // KW_WHERE LBRACK whereClauseElem+ RBRACK
   public static boolean whereClause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whereClause")) return false;
     if (!nextTokenIs(b, KW_WHERE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, KW_WHERE, LBRACK);
-    r = r && whereClauseItem(b, l + 1);
-    r = r && whereClause_3(b, l + 1);
-    r = r && whereClause_4(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, WHERE_CLAUSE, r);
-    return r;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, WHERE_CLAUSE, null);
+    r = consumeTokens(b, 2, KW_WHERE, LBRACK);
+    p = r; // pin = 2
+    r = r && report_error_(b, whereClause_2(b, l + 1));
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (COMMA whereClauseItem)*
-  private static boolean whereClause_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whereClause_3")) return false;
-    while (true) {
+  // whereClauseElem+
+  private static boolean whereClause_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClause_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = whereClauseElem(b, l + 1);
+    while (r) {
       int c = current_position_(b);
-      if (!whereClause_3_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "whereClause_3", c)) break;
+      if (!whereClauseElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "whereClause_2", c)) break;
     }
-    return true;
-  }
-
-  // COMMA whereClauseItem
-  private static boolean whereClause_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whereClause_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && whereClauseItem(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean whereClause_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whereClause_4")) return false;
-    consumeToken(b, COMMA);
-    return true;
+  /* ********************************************************** */
+  // !RBRACK whereClauseItem (COMMA | &RBRACK)
+  static boolean whereClauseElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = whereClauseElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, whereClauseItem(b, l + 1));
+    r = p && whereClauseElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::whereClauseRecover);
+    return r || p;
+  }
+
+  // !RBRACK
+  private static boolean whereClauseElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &RBRACK
+  private static boolean whereClauseElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseElem_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = whereClauseElem_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &RBRACK
+  private static boolean whereClauseElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2959,6 +3496,26 @@ public class RocParser implements PsiParser, LightPsiParser {
     boolean r;
     r = whereMethod(b, l + 1);
     if (!r) r = whereAlias(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(RBRACK | LOWER_IDENT)
+  static boolean whereClauseRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !whereClauseRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // RBRACK | LOWER_IDENT
+  private static boolean whereClauseRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whereClauseRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, RBRACK);
+    if (!r) r = consumeToken(b, LOWER_IDENT);
     return r;
   }
 
@@ -3589,78 +4146,43 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
+  // LBRACK listExprElem* RBRACK
   public static boolean listExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "listExpr")) return false;
     if (!nextTokenIsSmart(b, LBRACK)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, LIST_EXPR, null);
     r = consumeTokenSmart(b, LBRACK);
-    r = r && listExpr_1(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, LIST_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, listExpr_1(b, l + 1));
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (expr (COMMA expr)* COMMA?)?
+  // listExprElem*
   private static boolean listExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "listExpr_1")) return false;
-    listExpr_1_0(b, l + 1);
-    return true;
-  }
-
-  // expr (COMMA expr)* COMMA?
-  private static boolean listExpr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listExpr_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    r = r && listExpr_1_0_1(b, l + 1);
-    r = r && listExpr_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA expr)*
-  private static boolean listExpr_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listExpr_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!listExpr_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "listExpr_1_0_1", c)) break;
+      if (!listExprElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "listExpr_1", c)) break;
     }
     return true;
   }
 
-  // COMMA expr
-  private static boolean listExpr_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listExpr_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean listExpr_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "listExpr_1_0_2")) return false;
-    consumeTokenSmart(b, COMMA);
-    return true;
-  }
-
-  // (NO_SPACE_LPAREN | LPAREN) (expr (COMMA expr)* COMMA?)? RPAREN
+  // (NO_SPACE_LPAREN | LPAREN) tupleExprElem* RPAREN
   public static boolean tupleExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleExpr")) return false;
     if (!nextTokenIsSmart(b, LPAREN, NO_SPACE_LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TUPLE_EXPR, "<tuple expr>");
+    boolean r, p;
+    Marker m = enter_section_(b, l, _COLLAPSE_, TUPLE_EXPR, "<tuple expr>");
     r = tupleExpr_0(b, l + 1);
-    r = r && tupleExpr_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, tupleExpr_1(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // NO_SPACE_LPAREN | LPAREN
@@ -3672,51 +4194,14 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (expr (COMMA expr)* COMMA?)?
+  // tupleExprElem*
   private static boolean tupleExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tupleExpr_1")) return false;
-    tupleExpr_1_0(b, l + 1);
-    return true;
-  }
-
-  // expr (COMMA expr)* COMMA?
-  private static boolean tupleExpr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleExpr_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    r = r && tupleExpr_1_0_1(b, l + 1);
-    r = r && tupleExpr_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA expr)*
-  private static boolean tupleExpr_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleExpr_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!tupleExpr_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tupleExpr_1_0_1", c)) break;
+      if (!tupleExprElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tupleExpr_1", c)) break;
     }
-    return true;
-  }
-
-  // COMMA expr
-  private static boolean tupleExpr_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleExpr_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean tupleExpr_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tupleExpr_1_0_2")) return false;
-    consumeTokenSmart(b, COMMA);
     return true;
   }
 

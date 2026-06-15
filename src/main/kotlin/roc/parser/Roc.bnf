@@ -145,6 +145,50 @@ private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl
 private lexerOnlyTokens ::= COMMENT | OPAQUE_NAME | OP_BACKSLASH
 
 
+// == error recovery =========================================
+// Comma-list recovery, following the intellij-rust template (RustParser.bnf). Each list is a
+// plain `fooElem*` loop — NOT `item (COMMA item)*`, whose loop body rolls back wholesale when
+// the item fails, so a per-item recoverWhile never fires. Instead every element is shaped:
+//   private fooElem ::= !CLOSER element (COMMA | &CLOSER) { pin=1 recoverWhile=fooRecover }
+// - leading `!CLOSER` stops the loop at the close bracket (so trailing commas / empty lists
+//   fall out cleanly) and is element 1, so `pin=1` commits the element the moment we know it
+//   isn't the closer — a broken element then RECOVERS instead of rolling back;
+// - `(COMMA | &CLOSER)` carries the separator (comma, or the closer via zero-width lookahead);
+// - recoverWhile skips junk until the next element-start or the closer. It lists the element's
+//   FIRST set and must NOT stop on COMMA, else every element after a bad one stays stranded
+//   behind the leftover comma. The outer list still pins its opening bracket, so an unclosed
+//   list keeps its container node with a "closer expected" error.
+
+// FIRST sets — lead tokens of each element kind, used only by the recover predicates below.
+private exprFirst ::= INT | FLOAT | SINGLE_QUOTE | STRING_START | MULTILINE_STRING_START
+                    | LOWER_IDENT | UPPER_IDENT | NAMED_UNDERSCORE | TRIPLE_DOT
+                    | KW_IF | KW_MATCH | KW_FOR | KW_DBG | OP_BAR
+                    | OP_UNARY_MINUS | OP_BANG
+                    | LBRACK | LBRACE | NO_SPACE_LPAREN | LPAREN
+private exposedItemFirst ::= LOWER_IDENT | UPPER_IDENT
+private patternFirst ::= UNDERSCORE | LOWER_IDENT | NAMED_UNDERSCORE | UPPER_IDENT
+                       | INT | FLOAT | SINGLE_QUOTE | STRING_START
+                       | LBRACK | LBRACE | NO_SPACE_LPAREN | LPAREN
+private typeAnnoFirst ::= UPPER_IDENT | LOWER_IDENT | UNDERSCORE | NAMED_UNDERSCORE
+                        | LBRACE | LBRACK | NO_SPACE_LPAREN | LPAREN
+private typeParamFirst ::= LOWER_IDENT | NAMED_UNDERSCORE | UNDERSCORE
+
+// Recover predicates, named (element)(closer)Recover; shared where element+closer match.
+private exprBracketRecover    ::= !(RBRACK | exprFirst)               // listExpr
+private exprParenRecover      ::= !(RPAREN | exprFirst)               // callArgs, tupleExpr
+private exposedItemRecover    ::= !(RBRACK | exposedItemFirst)        // exposedList
+private patternBracketRecover ::= !(RBRACK | DOUBLE_DOT | patternFirst) // listPattern (has rest)
+private patternParenRecover   ::= !(RPAREN | patternFirst)           // tuplePattern, tagPatternArgs
+private typeAnnoParenRecover  ::= !(RPAREN | typeAnnoFirst)          // typeArguments, tupleType
+private typeParamParenRecover ::= !(RPAREN | typeParamFirst)         // typeHeaderArgs
+private recordPatternRecover  ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordPattern
+private whereClauseRecover    ::= !(RBRACK | LOWER_IDENT)            // whereClause
+// recordType/tagUnionType keep `..ext` structurally last (Parser.zig 3793/3836 break after
+// it), so DOUBLE_DOT is a STOP, not skipped — the field loop hands the ext to a trailing rule.
+private recordTypeFieldRecover ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordType field
+private tagUnionMemberRecover  ::= !(RBRACK | DOUBLE_DOT | UPPER_IDENT) // tagUnionType member
+
+
 // == headers ================================================
 // Dispatched on a distinct leading keyword (app/module/package/hosted/platform),
 // so the alternatives are first-token-disjoint and order is irrelevant.
@@ -158,7 +202,8 @@ hostedHeader  ::= KW_HOSTED exposes
 
 provides ::= exposedList
 exposes  ::= exposedList
-private exposedList ::= LBRACK (exposedItem (COMMA exposedItem)* COMMA?)? RBRACK
+private exposedList ::= LBRACK exposedListElem* RBRACK { pin=1 }
+private exposedListElem ::= !RBRACK exposedItem (COMMA | &RBRACK) { pin=1 recoverWhile=exposedItemRecover }
 
 exposedItem ::= LOWER_IDENT (KW_AS LOWER_IDENT)?
               | UPPER_IDENT (KW_AS UPPER_IDENT | DOT_STAR)?
@@ -214,7 +259,8 @@ associatedBlock ::= DOT LBRACE associatedItem* RBRACE
 private associatedItem ::= valueAnnotation | typeDecl | valueDecl
 
 typeHeader     ::= UPPER_IDENT typeHeaderArgs?
-typeHeaderArgs ::= (NO_SPACE_LPAREN | LPAREN) (typeParam (COMMA typeParam)* COMMA?)? RPAREN
+typeHeaderArgs ::= (NO_SPACE_LPAREN | LPAREN) typeHeaderArg* RPAREN { pin=1 }
+private typeHeaderArg ::= !RPAREN typeParam (COMMA | &RPAREN) { pin=1 recoverWhile=typeParamParenRecover }
 // A type parameter is the DECLARATION site of a type variable (uses appear as
 // `typeReference`). Kept public so a later resolution phase can hang find-usages /
 // rename / unused-param on it (PsiNamedElement) without re-shaping the grammar.
@@ -224,7 +270,10 @@ typeParam ::= LOWER_IDENT | NAMED_UNDERSCORE | UNDERSCORE
 // (`a.method : Type`) or an alias (`a.Alias`, no colon). Method types reuse `typeAnno`
 // (commonly a comma-arg function, e.g. `a, a -> Bool`). The reference rejects an empty
 // `where []`, so at least one clause is required.
-whereClause ::= KW_WHERE LBRACK whereClauseItem (COMMA whereClauseItem)* COMMA? RBRACK
+whereClause ::= KW_WHERE LBRACK whereClauseElem+ RBRACK { pin=2 }
+// `+` (not `*`) keeps the reference's "no empty `where []`" rule; `!RBRACK` still lets the
+// loop stop at the closer once at least one clause is present.
+private whereClauseElem ::= !RBRACK whereClauseItem (COMMA | &RBRACK) { pin=1 recoverWhile=whereClauseRecover }
 private whereClauseItem ::= whereMethod | whereAlias
 whereMethod ::= LOWER_IDENT (NO_SPACE_DOT_LOWER_IDENT | DOT_LOWER_IDENT) OP_COLON typeAnno
 whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
@@ -276,21 +325,24 @@ literalPattern    ::= INT | FLOAT | SINGLE_QUOTE       // string literal reuses 
 
 // `Ok`, `Json.Ok`, `Pair(x, y)`. Qualifier chain = lexer dotted-upper tokens
 tagPattern     ::= UPPER_IDENT NO_SPACE_DOT_UPPER_IDENT* tagPatternArgs?
-tagPatternArgs ::= NO_SPACE_LPAREN (pattern (COMMA pattern)* COMMA?)? RPAREN
+tagPatternArgs ::= NO_SPACE_LPAREN tagPatternArg* RPAREN { pin=1 }
+private tagPatternArg ::= !RPAREN pattern (COMMA | &RPAREN) { pin=1 recoverWhile=patternParenRecover }
 
 // `[a, b]`, `[1, 2, .. as rest]`, `[..]`. List rest is `.. as name` (new syntax).
-listPattern             ::= LBRACK (listPatternElem (COMMA listPatternElem)* COMMA?)? RBRACK
-private listPatternElem ::= listRestPattern | pattern
+listPattern             ::= LBRACK listPatternElem* RBRACK { pin=1 }
+private listPatternElem ::= !RBRACK (listRestPattern | pattern) (COMMA | &RBRACK) { pin=1 recoverWhile=patternBracketRecover }
 listRestPattern         ::= DOUBLE_DOT (KW_AS LOWER_IDENT)?
 
 // `{ name, age }`, `{ name: n }`, `{ x, ..rest }`. NB record rest is `..name`
 // directly (no `as`), unlike list rest.
-recordPattern      ::= LBRACE (recordPatternField (COMMA recordPatternField)* COMMA?)? RBRACE
+recordPattern      ::= LBRACE recordPatternElem* RBRACE { pin=1 }
+private recordPatternElem ::= !RBRACE recordPatternField (COMMA | &RBRACE) { pin=1 recoverWhile=recordPatternRecover }
 recordPatternField ::= DOUBLE_DOT LOWER_IDENT?
                      | LOWER_IDENT (OP_COLON pattern)?
 
 // `(a, b)`, `(a)`. A standalone '(' may be spaced or no-space.
-tuplePattern ::= (NO_SPACE_LPAREN | LPAREN) (pattern (COMMA pattern)* COMMA?)? RPAREN
+tuplePattern ::= (NO_SPACE_LPAREN | LPAREN) tuplePatternElem* RPAREN { pin=1 }
+private tuplePatternElem ::= !RPAREN pattern (COMMA | &RPAREN) { pin=1 recoverWhile=patternParenRecover }
 
 // == type annotations =======================================
 // Faithful to parseTypeAnno (roc-lang/src/parse/Parser.zig). The arrow function is the
@@ -321,22 +373,26 @@ private primaryType ::= typeReference
 typeReference ::= typeName typeArguments?
 private typeName ::= (UPPER_IDENT | LOWER_IDENT) qualifierSegment*
 private qualifierSegment ::= NO_SPACE_DOT_UPPER_IDENT | NO_SPACE_DOT_LOWER_IDENT
-typeArguments ::= NO_SPACE_LPAREN (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
+typeArguments ::= NO_SPACE_LPAREN typeArgument* RPAREN { pin=1 }
+private typeArgument ::= !RPAREN typeAnno (COMMA | &RPAREN) { pin=1 recoverWhile=typeAnnoParenRecover }
 
 // (a), (a, b), (a -> b). A standalone '(' may be no-space or spaced.
-tupleType ::= (NO_SPACE_LPAREN | LPAREN) (typeAnno (COMMA typeAnno)* COMMA?)? RPAREN
+tupleType ::= (NO_SPACE_LPAREN | LPAREN) tupleTypeElem* RPAREN { pin=1 }
+private tupleTypeElem ::= !RPAREN typeAnno (COMMA | &RPAREN) { pin=1 recoverWhile=typeAnnoParenRecover }
 
-// { name: Type, ..ext } — `..` / `..rest` extension must be last.
-recordType ::= LBRACE recordTypeBody? RBRACE
-private recordTypeBody ::= recordTypeField (COMMA recordTypeField)* (COMMA recordTypeExt)? COMMA?
-                         | recordTypeExt
+// { name: Type, ..ext } — `..` / `..rest` extension must be last (Parser.zig 3793: the field
+// loop breaks on `..`). So fields are the recover-loop and the ext is a separate trailing rule
+// (NOT folded into the loop, unlike recordPattern whose `..rest` is just a field variant); the
+// `!(RBRACE | DOUBLE_DOT)` guard ends the field loop at `}` or the ext.
+recordType ::= LBRACE recordTypeElem* (recordTypeExt COMMA?)? RBRACE { pin=1 }
+private recordTypeElem ::= !(RBRACE | DOUBLE_DOT) recordTypeField (COMMA | &(RBRACE | DOUBLE_DOT)) { pin=1 recoverWhile=recordTypeFieldRecover }
 recordTypeField ::= LOWER_IDENT OP_COLON typeAnno
 recordTypeExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
 
-// [Ok(a), Err(b), ..ext] — open-union extension must be last.
-tagUnionType ::= LBRACK tagUnionBody? RBRACK
-private tagUnionBody ::= tagUnionMember (COMMA tagUnionMember)* (COMMA tagUnionExt)? COMMA?
-                       | tagUnionExt
+// [Ok(a), Err(b), ..ext] — open-union extension must be last (Parser.zig 3836), same shape as
+// recordType: members recover-loop, ext trailing.
+tagUnionType ::= LBRACK tagUnionElem* (tagUnionExt COMMA?)? RBRACK { pin=1 }
+private tagUnionElem ::= !(RBRACK | DOUBLE_DOT) tagUnionMember (COMMA | &(RBRACK | DOUBLE_DOT)) { pin=1 recoverWhile=tagUnionMemberRecover }
 tagUnionMember ::= UPPER_IDENT typeArguments?
 tagUnionExt ::= DOUBLE_DOT (LOWER_IDENT | NAMED_UNDERSCORE)?
 
@@ -421,7 +477,8 @@ questionSuffixExpr ::= expr NO_SPACE_OP_QUESTION
 // the same way patternPrimary reuses `string`. RHS-must-be-callable is a later-phase check.
 arrowCallExpr ::= expr OP_ARROW arrowCallTarget
 private arrowCallTarget ::= (qualifiedNameExpr | tagExpr | identExpr | tupleExpr) callArgs*
-private callArgs ::= NO_SPACE_LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
+private callArgs ::= NO_SPACE_LPAREN callArg* RPAREN { pin=1 }
+private callArg ::= !RPAREN expr (COMMA | &RPAREN) { pin=1 recoverWhile=exprParenRecover }
 
 // Distinct literal nodes (not one literalExpr) mirror the reference's int/frac/single-quote and its
 // typed_int/typed_frac (Parser.zig 2790) — a direct match for later type-inference. Typed forms are
@@ -484,11 +541,13 @@ forExpr ::= KW_FOR patternNoAlts KW_IN expr expr
 // `expr` arm). Standalone top-level `dbg y` waits on the top-level bare-expr arm (next slice).
 dbgExpr ::= KW_DBG expr
 
-listExpr  ::= LBRACK (expr (COMMA expr)* COMMA?)? RBRACK
+listExpr  ::= LBRACK listExprElem* RBRACK { pin=1 }
+private listExprElem ::= !RBRACK expr (COMMA | &RBRACK) { pin=1 recoverWhile=exprBracketRecover }
 
 // A single `(a)` is built as a 1-tuple, not a grouping node — faithful to parseExprWithBp
 // (`// TODO: Parenthesized expressions`) and consistent with tuplePattern.
-tupleExpr ::= (NO_SPACE_LPAREN | LPAREN) (expr (COMMA expr)* COMMA?)? RPAREN
+tupleExpr ::= (NO_SPACE_LPAREN | LPAREN) tupleExprElem* RPAREN { pin=1 }
+private tupleExprElem ::= !RPAREN expr (COMMA | &RPAREN) { pin=1 recoverWhile=exprParenRecover }
 
 // `{`-primary RECORD form. Listed before blockExpr in `expr`; record-first ordering IS the
 // record-vs-block split (see blockExpr). Unlike record TYPE/PATTERN, the update extension is a

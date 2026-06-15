@@ -11,7 +11,7 @@ we never fund both sides of the same thing.
 - **Parser recovery** (`pin` + `recoverWhile` in `Roc.bnf`). Sequence this first: every
   PSI feature below degrades on incomplete/half-typed code without it, and we edit live
   code constantly.
-- Finish the syntax highlighter.
+- Finish the lexer syntax highlighter. ✅
 
 ## Editor features - pure PSI, the plugin's job
 
