@@ -516,4 +516,18 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testRecoverTagUnionBad() = doTest(true)
+
+    // -- error recovery: header lists (packages / platform requires/provides/targets) --
+
+    @Test
+    fun testRecoverPackagesBad() = doTest(true)
+
+    @Test
+    fun testRecoverRequiresBad() = doTest(true)
+
+    @Test
+    fun testRecoverRequiresForBad() = doTest(true)
+
+    @Test
+    fun testRecoverTargetsBad() = doTest(true)
 }
