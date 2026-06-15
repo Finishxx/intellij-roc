@@ -130,7 +130,12 @@
 
 }
 
-root ::= header? statement*
+root ::= header? rootStmt*
+// Loop-level recovery (rust's RootItem_with_recover): `!<<eof>>` is the pinnable element-1, so
+// `pin=1` commits once we know it's not EOF; `statement` then rolls back per-arm (unpinned) and
+// the wrapper pin fires only after every arm failed — garbage between statements becomes a skipped
+// sibling error and following statements still parse. recoverWhile skips to the next statement start.
+private rootStmt ::= !<<eof>> statement { pin=1 recoverWhile=rootStmtRecover }
 
 // `statement` (top level) and `blockStmt` (in a block) both mirror the reference's single parseStmt;
 // the top_level/in_body differences (import top-level-only, var in-body-only) are later-phase checks.
@@ -179,6 +184,7 @@ private exprParenRecover      ::= !(RPAREN | exprFirst)               // callArg
 private exposedItemRecover    ::= !(RBRACK | exposedItemFirst)        // exposedList
 private patternBracketRecover ::= !(RBRACK | DOUBLE_DOT | patternFirst) // listPattern (has rest)
 private patternParenRecover   ::= !(RPAREN | patternFirst)           // tuplePattern, tagPatternArgs
+private matchBranchRecover    ::= !(RBRACE | patternFirst)           // matchExpr branches (sync on next branch's pattern)
 private typeAnnoParenRecover  ::= !(RPAREN | typeAnnoFirst)          // typeArguments, tupleType
 private typeParamParenRecover ::= !(RPAREN | typeParamFirst)         // typeHeaderArgs
 private recordPatternRecover  ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordPattern
@@ -192,6 +198,21 @@ private braceLowerIdentRecover ::= !(RBRACE | LOWER_IDENT)            // package
 private requiresRecover        ::= !(RBRACE | LBRACK | LOWER_IDENT)   // platformRequires entry (may lead with a `[`-for-clause)
 private requiresForRecover     ::= !(RBRACK | UPPER_IDENT)           // requiresForClause aliases
 private targetFileRecover      ::= !(RBRACK | STRING_START | LOWER_IDENT | KW_APP) // targetLinkEntry file list
+
+// statement loops (root / blockExpr / associatedBlock) — the separator-LESS tier. Roc has no
+// statement separator (newlines are lexer trivia), so the sync set is "statement-start tokens
+// + the closer", exactly the rust RootItem/BlockElement idiom. statementFirst = exprFirst +
+// UNDERSCORE (destructure decl) + the statement keywords; exprFirst already subsumes
+// UPPER_IDENT/LOWER_IDENT/NAMED_UNDERSCORE/literals/brackets, so the anno/decl/expr arms' starts.
+private statementFirst ::= KW_IMPORT | KW_EXPECT | KW_CRASH | KW_RETURN | KW_WHILE | KW_BREAK
+                         | KW_VAR | UNDERSCORE | exprFirst
+// root has NO closer (EOF is the hard stop), so a stray `}` must be SKIPPED, not stopped on
+// (rust's `RootItem_recover ::= !Item_first`). Do NOT add RBRACE here, or recovery stalls on `}`.
+private rootStmtRecover        ::= !statementFirst
+// blocks DO have a `}` closer: stop on it so the element's `!RBRACE` guard can close the block.
+private blockStmtRecover       ::= !(RBRACE | statementFirst)
+// associatedItem = valueAnnotation | typeDecl | valueDecl (no expr arm) → a tighter sync set.
+private associatedItemRecover  ::= !(RBRACE | KW_VAR | patternFirst)
 
 
 // == headers ================================================
@@ -261,7 +282,8 @@ typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) type
 // VALUE_ANNOTATION/VALUE_DECL/TYPE_DECL attaches directly under ASSOCIATED_BLOCK (like blockStmt).
 // Deferred semantic checks: an alias may not carry a block, and the last item may not be a bare expr
 // (hence no `expr` arm).
-associatedBlock ::= DOT LBRACE associatedItem* RBRACE
+associatedBlock ::= DOT LBRACE associatedItemElem* RBRACE { pin=2 }
+private associatedItemElem ::= !RBRACE associatedItem { pin=1 recoverWhile=associatedItemRecover }
 private associatedItem ::= valueAnnotation | typeDecl | valueDecl
 
 typeHeader     ::= UPPER_IDENT typeHeaderArgs?
@@ -529,8 +551,18 @@ ifExpr ::= KW_IF expr expr (KW_ELSE expr)?
 // Branches optionally comma-separated, trailing comma allowed; the `=>` is OP_FAT_ARROW (the
 // reference also tolerates `->` with a diagnostic — left to a later phase). matchBranch is a
 // regular node (doesn't match `.*Expr`, stays out of the engine); its pattern allows alternatives.
-matchExpr   ::= KW_MATCH expr LBRACE matchBranch (COMMA? matchBranch)* COMMA? RBRACE
-matchBranch ::= pattern (KW_IF expr)? OP_FAT_ARROW expr
+//
+// Recovery is the separator-LESS variant of the list template (branches may be newline- not
+// comma-separated, so the per-element separator is `COMMA?` not `(COMMA | &CLOSE)`):
+//   - matchExpr pins the `{` (pin=3) so an unclosed `match x {` keeps the node + "} expected".
+//   - matchBranchElem (private, inlines → commas stay direct children of MATCH_EXPR) is the
+//     recover loop: a garbage branch start (no valid pattern) is skipped to the next pattern.
+//   - matchBranch pins after the pattern, so `Red =>` with a missing/broken body keeps a partial
+//     MATCH_BRANCH with the error boxed inside, instead of rolling the whole branch back.
+// `+` keeps ≥1 branch (empty `match x {}` was invalid before and stays so).
+matchExpr   ::= KW_MATCH expr LBRACE matchBranchElem+ RBRACE { pin=3 }
+private matchBranchElem ::= !RBRACE matchBranch COMMA? { pin=1 recoverWhile=matchBranchRecover }
+matchBranch ::= pattern (KW_IF expr)? OP_FAT_ARROW expr { pin=1 }
 
 // Closure `|args| body` — patternNoAlts list (alternatives forbidden) between two bars; `||` (no
 // args) allowed (Parser.zig 3012). OP_BAR is a unique lead token (`|>` is the distinct OP_PIZZA,
@@ -569,7 +601,11 @@ recordExprField ::= LOWER_IDENT (OP_COLON expr)?
 // here. Matches Parser.zig's `.OpenCurly` arm (2909-3010) except `{ ident }` — reference: block
 // returning `ident`; us: shorthand record (type-level only, reversible via a later `=`-lookahead
 // predicate). `+` (non-empty) leaves `{}` to recordExpr, the reference's empty record.
-blockExpr ::= LBRACE blockStmt+ RBRACE
+blockExpr ::= LBRACE blockStmtElem+ RBRACE { pin=1 }
+// Pin the `{` (failure-only): once `expr` has rolled `recordExpr` back and committed to a block,
+// an unclosed `{ … ` keeps a BLOCK_EXPR node with a `}`-expected error instead of failing wholesale.
+// recordExpr (tried first in `expr`) stays unpinned so the record-vs-block split is unaffected.
+private blockStmtElem ::= !RBRACE blockStmt { pin=1 recoverWhile=blockStmtRecover }
 
 // Block form of `statement` (see its comment); the concrete node attaches directly under BLOCK_EXPR.
 private blockStmt ::= keywordStmt | valueAnnotation | varDecl | valueDecl | expr

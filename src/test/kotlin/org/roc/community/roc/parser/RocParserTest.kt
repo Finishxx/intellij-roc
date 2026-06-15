@@ -530,4 +530,20 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testRecoverTargetsBad() = doTest(true)
+
+    // -- error recovery: match branches (separator-less list) --
+
+    @Test
+    fun testRecoverMatchBranchBad() = doTest(true)
+
+    // -- error recovery: statement loops (separator-less: root / block / associated block) --
+
+    @Test
+    fun testRecoverRootStmtBad() = doTest(true)
+
+    @Test
+    fun testRecoverBlockStmtBad() = doTest(true)
+
+    @Test
+    fun testRecoverAssociatedItemBad() = doTest(true)
 }
