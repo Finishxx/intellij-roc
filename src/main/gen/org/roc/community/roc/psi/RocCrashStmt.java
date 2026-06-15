@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RocCrashStmt extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocExpr getExpr();
 
 }

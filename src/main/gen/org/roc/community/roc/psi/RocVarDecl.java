@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface RocVarDecl extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocExpr getExpr();
 
-  @NotNull
+  @Nullable
   PsiElement getLowerIdent();
 
 }

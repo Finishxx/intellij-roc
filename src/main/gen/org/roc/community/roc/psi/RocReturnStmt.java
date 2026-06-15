@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RocReturnStmt extends PsiElement {
 
-  @NotNull
+  @Nullable
   RocExpr getExpr();
 
 }

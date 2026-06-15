@@ -28,15 +28,15 @@ public class RocVarDeclImpl extends ASTWrapperPsiElement implements RocVarDecl {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocExpr getExpr() {
-    return findNotNullChildByClass(RocExpr.class);
+    return findChildByClass(RocExpr.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getLowerIdent() {
-    return findNotNullChildByType(LOWER_IDENT);
+    return findChildByType(LOWER_IDENT);
   }
 
 }

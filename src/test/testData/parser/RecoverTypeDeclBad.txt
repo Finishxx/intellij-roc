@@ -1,0 +1,8 @@
+FILE
+  RocTypeDeclImpl(TYPE_DECL)
+    RocTypeHeaderImpl(TYPE_HEADER)
+      PsiElement(UPPER_IDENT)('Foo')
+    PsiWhiteSpace(' ')
+    PsiElement(:=)(':=')
+    PsiErrorElement:<function type>, <tuple type>, <type reference>, NAMED_UNDERSCORE, '[', _ or '{' expected
+      <empty list>

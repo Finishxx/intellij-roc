@@ -1,0 +1,7 @@
+FILE
+  RocVarDeclImpl(VAR_DECL)
+    PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    PsiElement(LOWER_IDENT)('x')
+    PsiErrorElement:':' or '=' expected
+      <empty list>

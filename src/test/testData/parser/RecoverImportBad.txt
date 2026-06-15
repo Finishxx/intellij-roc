@@ -1,0 +1,5 @@
+FILE
+  RocImportStatementImpl(IMPORT_STATEMENT)
+    PsiElement(import)('import')
+    PsiErrorElement:LOWER_IDENT, STRING_START or UPPER_IDENT expected
+      <empty list>

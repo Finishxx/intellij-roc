@@ -1,0 +1,7 @@
+FILE
+  RocValueAnnotationImpl(VALUE_ANNOTATION)
+    PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiErrorElement:<function type>, <tuple type>, <type reference>, NAMED_UNDERSCORE, '[', _ or '{' expected
+      <empty list>

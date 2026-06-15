@@ -258,7 +258,7 @@ private multilineStringPart ::= STRING_PART | stringInterpolation | MULTILINE_ST
 //   module import:  import pf.Stdout | import Json.Core | import json.Json.Utf8
 //                          ... as Out | ... exposing [line!, write]
 //   file import:    import "data.txt" as data : Str
-importStatement ::= KW_IMPORT (fileImport | moduleImport)
+importStatement ::= KW_IMPORT (fileImport | moduleImport) { pin=1 }
 
 private moduleImport ::= moduleName importAlias? importExposing?
 moduleName ::= UPPER_IDENT  (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)*
@@ -273,10 +273,15 @@ private fileImport ::= string KW_AS LOWER_IDENT OP_COLON typeAnno
 // == type-declaration statements ============================
 // Optional leading `var` is the reference's is_var flag (Parser.zig 1878); `var x : T` lands here,
 // `x : T` without it. The `var` + plain-ident shape (not NAMED_UNDERSCORE) is a later-phase check.
-valueAnnotation ::= KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
+// pin=3 = after OP_COLON (elem 1 `KW_VAR?`, 2 the ident group, 3 `OP_COLON`). `name :` / `var x :`
+// is uniquely an annotation among the statement arms, so committing after `:` keeps a partial
+// VALUE_ANNOTATION (error nested) instead of rolling back when typeAnno is missing/half-typed.
+valueAnnotation ::= KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause? { pin=3 }
 
 // `Name(a) : T` (alias) | `Name(a) := T` (nominal) | `Name(a) :: T` (opaque).
-typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause? associatedBlock?
+// pin=2 = after the colon-family group (elem 1 typeHeader, 2 the `(: | := | ::)`). `Upper :`/`:=`/`::`
+// is uniquely a typeDecl; typeHeaderArgs self-recovers, so this only rescues a missing typeAnno.
+typeDecl       ::= typeHeader (OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON) typeAnno whereClause? associatedBlock? { pin=2 }
 
 // Associated items `.{ … }` on a nominal/opaque decl (Parser.zig 2047). `.{` is DOT + LBRACE (no
 // combined token; the `.` is plain DOT because `{` isn't an ident char). Items are private so each
@@ -310,22 +315,32 @@ whereAlias  ::= LOWER_IDENT (NO_SPACE_DOT_UPPER_IDENT | DOT_UPPER_IDENT)
 // == declarations ===========================================
 // Value / destructure declaration: `x = e`, `{a, b} = e`, `(x, y) = e` — the reference's `.decl`
 // (parseStmtByType 1907 / 1975 / 2111).
-valueDecl ::= patternNoAlts OP_ASSIGN expr
+// pin=2 = after OP_ASSIGN. `pattern =` is uniquely a decl, so `x =` / `{a,b} =` keeps a partial
+// VALUE_DECL when the RHS is absent. Only fires when expr produces NOTHING (next token in no
+// expr-FIRST set — EOF/closer); a real expr token after `=` is grabbed greedily today regardless.
+valueDecl ::= patternNoAlts OP_ASSIGN expr { pin=2 }
 
 // `var x = e` — dedicated mutable-binding statement (.var, Parser.zig 1891). `var` is NOT a pattern
 // in Roc (single ident only, 1868) — hence its own rule, not a patternPrimary. `var x : T` is a
 // flagged annotation (see valueAnnotation). In-body-only / single-ident limits are later-phase checks.
-varDecl ::= KW_VAR LOWER_IDENT OP_ASSIGN expr
+// pin=1 = after KW_VAR, EARLIER than valueDecl's pin: valueAnnotation (tried first) already claims
+// every `var … :`, so any `var`-leading input reaching here is a var decl. Pinned early because
+// KW_VAR has NO expr fallback (not in exprFirst) — without it a lone `var x` fails all arms and the
+// loop's empty-progress guard drops it, unlike a bare `x` which the expr arm rescues as identExpr.
+varDecl ::= KW_VAR LOWER_IDENT OP_ASSIGN expr { pin=1 }
 
 // == keyword statements =====================================
 // parseStmtByType (Parser.zig 1791-1906), shared by `statement` and `blockStmt`. Context limits
 // (var in-body, import top-level) are a later-phase check, not grammar. `dbg`/`for` are expressions
 // (see dbgExpr/forExpr).
 private keywordStmt ::= expectStmt | crashStmt | returnStmt | whileStmt | breakStmt
-expectStmt ::= KW_EXPECT expr
-crashStmt  ::= KW_CRASH  expr
-returnStmt ::= KW_RETURN expr       // statement-only; in expr position the reference malforms it (3137)
-whileStmt  ::= KW_WHILE  expr expr  // cond, body
+// pin=1 after the lead keyword: it uniquely selects the arm, so a half-typed `expect`/`crash`/
+// `return`/`while` (missing operand) keeps a partial node with the error nested inside, instead of
+// rolling the whole rule back. breakStmt has no operand → nothing to commit, no pin.
+expectStmt ::= KW_EXPECT expr { pin=1 }
+crashStmt  ::= KW_CRASH  expr { pin=1 }
+returnStmt ::= KW_RETURN expr { pin=1 }       // statement-only; in expr position the reference malforms it (3137)
+whileStmt  ::= KW_WHILE  expr expr { pin=1 }  // cond, body
 breakStmt  ::= KW_BREAK
 
 // == patterns ===============================================
@@ -545,7 +560,9 @@ ellipsisExpr ::= TRIPLE_DOT
 
 // No `then` keyword in Roc — the branches are juxtaposed. Missing `else` is the reference's
 // statement-form `if_without_else` (Parser.zig 3034); we accept it as an IF_EXPR with no else.
-ifExpr ::= KW_IF expr expr (KW_ELSE expr)?
+// pin=1 after KW_IF (a unique expr lead): half-typed `if` / `if cond` keeps a partial IF_EXPR with
+// the error nested, instead of rolling back. Failure-only, so the precedence climb is unaffected.
+ifExpr ::= KW_IF expr expr (KW_ELSE expr)? { pin=1 }
 
 // `match subject { pattern (if guard)? => body, … }`. The braces belong to matchExpr (consumed
 // positionally, Parser.zig 3060) — NOT a standalone `{` primary, so no record/block ambiguity.
@@ -580,12 +597,14 @@ private lambdaParamElem ::= !OP_BAR patternNoAlts (COMMA | &OP_BAR) { pin=1 reco
 // `for pattern in iterable body` — `for` is an expression in Roc (Parser.zig 3092); pattern is
 // alternatives-forbidden. (The platform header's KW_FOR is a header-only position, never reached
 // via expr, so there is no conflict.)
-forExpr ::= KW_FOR patternNoAlts KW_IN expr expr
+// pin=1 after KW_FOR (unique expr lead): `for` / `for x in xs` (missing body) keeps a partial FOR_EXPR.
+forExpr ::= KW_FOR patternNoAlts KW_IN expr expr { pin=1 }
 
 // `dbg <expr>` — expression primary (Parser.zig 3084), like forExpr. Also a statement in the ref
 // (1842), but the expression form covers both our contexts (RHS, and block stmt via blockStmt's
 // `expr` arm). Standalone top-level `dbg y` waits on the top-level bare-expr arm (next slice).
-dbgExpr ::= KW_DBG expr
+// pin=1 after KW_DBG (unique expr lead): a bare `dbg` (missing operand) keeps a partial DBG_EXPR.
+dbgExpr ::= KW_DBG expr { pin=1 }
 
 listExpr  ::= LBRACK listExprElem* RBRACK { pin=1 }
 private listExprElem ::= !RBRACK expr (COMMA | &RBRACK) { pin=1 recoverWhile=exprBracketRecover }

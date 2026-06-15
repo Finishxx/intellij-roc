@@ -416,12 +416,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean crashStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "crashStmt")) return false;
     if (!nextTokenIs(b, KW_CRASH)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, CRASH_STMT, null);
     r = consumeToken(b, KW_CRASH);
+    p = r; // pin = 1
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, CRASH_STMT, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -429,12 +430,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean expectStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expectStmt")) return false;
     if (!nextTokenIs(b, KW_EXPECT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, EXPECT_STMT, null);
     r = consumeToken(b, KW_EXPECT);
+    p = r; // pin = 1
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, EXPECT_STMT, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -801,12 +803,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean importStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "importStatement")) return false;
     if (!nextTokenIs(b, KW_IMPORT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, IMPORT_STATEMENT, null);
     r = consumeToken(b, KW_IMPORT);
+    p = r; // pin = 1
     r = r && importStatement_1(b, l + 1);
-    exit_section_(b, m, IMPORT_STATEMENT, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // fileImport | moduleImport
@@ -2482,12 +2485,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean returnStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "returnStmt")) return false;
     if (!nextTokenIs(b, KW_RETURN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, RETURN_STMT, null);
     r = consumeToken(b, KW_RETURN);
+    p = r; // pin = 1
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, RETURN_STMT, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -3472,15 +3476,16 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean typeDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeDecl")) return false;
     if (!nextTokenIs(b, UPPER_IDENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TYPE_DECL, null);
     r = typeHeader(b, l + 1);
     r = r && typeDecl_1(b, l + 1);
-    r = r && typeAnno(b, l + 1);
-    r = r && typeDecl_3(b, l + 1);
-    r = r && typeDecl_4(b, l + 1);
-    exit_section_(b, m, TYPE_DECL, r);
-    return r;
+    p = r; // pin = 2
+    r = r && report_error_(b, typeAnno(b, l + 1));
+    r = p && report_error_(b, typeDecl_3(b, l + 1)) && r;
+    r = p && typeDecl_4(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // OP_COLON | OP_COLON_EQUAL | OP_DOUBLE_COLON
@@ -3754,15 +3759,16 @@ public class RocParser implements PsiParser, LightPsiParser {
   // KW_VAR? (LOWER_IDENT | NAMED_UNDERSCORE) OP_COLON typeAnno whereClause?
   public static boolean valueAnnotation(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueAnnotation")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, VALUE_ANNOTATION, "<value annotation>");
     r = valueAnnotation_0(b, l + 1);
     r = r && valueAnnotation_1(b, l + 1);
     r = r && consumeToken(b, OP_COLON);
-    r = r && typeAnno(b, l + 1);
-    r = r && valueAnnotation_4(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 3
+    r = r && report_error_(b, typeAnno(b, l + 1));
+    r = p && valueAnnotation_4(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // KW_VAR?
@@ -3792,13 +3798,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   // patternNoAlts OP_ASSIGN expr
   public static boolean valueDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "valueDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, VALUE_DECL, "<value decl>");
     r = patternNoAlts(b, l + 1);
     r = r && consumeToken(b, OP_ASSIGN);
+    p = r; // pin = 2
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -3806,12 +3813,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean varDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "varDecl")) return false;
     if (!nextTokenIs(b, KW_VAR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, KW_VAR, LOWER_IDENT, OP_ASSIGN);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, VAR_DECL, null);
+    r = consumeTokens(b, 1, KW_VAR, LOWER_IDENT, OP_ASSIGN);
+    p = r; // pin = 1
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, VAR_DECL, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -3971,13 +3979,14 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean whileStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whileStmt")) return false;
     if (!nextTokenIs(b, KW_WHILE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, WHILE_STMT, null);
     r = consumeToken(b, KW_WHILE);
-    r = r && expr(b, l + 1, -1);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, WHILE_STMT, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, expr(b, l + 1, -1));
+    r = p && expr(b, l + 1, -1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -4015,7 +4024,7 @@ public class RocParser implements PsiParser, LightPsiParser {
   // 29: PREFIX(matchExpr)
   // 30: ATOM(forExpr)
   // 31: ATOM(lambdaExpr)
-  // 32: PREFIX(dbgExpr)
+  // 32: ATOM(dbgExpr)
   // 33: ATOM(listExpr)
   // 34: ATOM(tupleExpr)
   // 35: ATOM(recordExpr)
@@ -4389,14 +4398,15 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean ifExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifExpr")) return false;
     if (!nextTokenIsSmart(b, KW_IF)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, IF_EXPR, null);
     r = consumeTokenSmart(b, KW_IF);
-    r = r && expr(b, l + 1, -1);
-    r = r && expr(b, l + 1, -1);
-    r = r && ifExpr_3(b, l + 1);
-    exit_section_(b, m, IF_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, expr(b, l + 1, -1));
+    r = p && report_error_(b, expr(b, l + 1, -1)) && r;
+    r = p && ifExpr_3(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // (KW_ELSE expr)?
@@ -4461,15 +4471,16 @@ public class RocParser implements PsiParser, LightPsiParser {
   public static boolean forExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "forExpr")) return false;
     if (!nextTokenIsSmart(b, KW_FOR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, FOR_EXPR, null);
     r = consumeTokenSmart(b, KW_FOR);
-    r = r && patternNoAlts(b, l + 1);
-    r = r && consumeToken(b, KW_IN);
-    r = r && expr(b, l + 1, -1);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, FOR_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, patternNoAlts(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, KW_IN)) && r;
+    r = p && report_error_(b, expr(b, l + 1, -1)) && r;
+    r = p && expr(b, l + 1, -1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // OP_BAR lambdaParamElem* OP_BAR expr
@@ -4498,15 +4509,16 @@ public class RocParser implements PsiParser, LightPsiParser {
     return true;
   }
 
+  // KW_DBG expr
   public static boolean dbgExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dbgExpr")) return false;
     if (!nextTokenIsSmart(b, KW_DBG)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
+    Marker m = enter_section_(b, l, _NONE_, DBG_EXPR, null);
     r = consumeTokenSmart(b, KW_DBG);
-    p = r;
-    r = p && expr(b, l, 32);
-    exit_section_(b, l, m, DBG_EXPR, r, p, null);
+    p = r; // pin = 1
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 

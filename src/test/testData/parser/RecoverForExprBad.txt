@@ -1,0 +1,19 @@
+FILE
+  RocValueDeclImpl(VALUE_DECL)
+    RocIdentPatternImpl(IDENT_PATTERN)
+      PsiElement(LOWER_IDENT)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RocForExprImpl(FOR_EXPR)
+      PsiElement(for)('for')
+      PsiWhiteSpace(' ')
+      RocIdentPatternImpl(IDENT_PATTERN)
+        PsiElement(LOWER_IDENT)('y')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      RocIdentExprImpl(IDENT_EXPR)
+        PsiElement(LOWER_IDENT)('ys')
+      PsiErrorElement:<expr> or NO_SPACE_LPAREN expected
+        <empty list>

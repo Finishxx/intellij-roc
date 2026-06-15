@@ -28,9 +28,9 @@ public class RocCrashStmtImpl extends ASTWrapperPsiElement implements RocCrashSt
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RocExpr getExpr() {
-    return findNotNullChildByClass(RocExpr.class);
+    return findChildByClass(RocExpr.class);
   }
 
 }

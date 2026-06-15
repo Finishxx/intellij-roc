@@ -554,4 +554,34 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testRecoverAssociatedItemBad() = doTest(true)
+
+    // -- error recovery: committing-token pins (half-typed single constructs keep a partial
+    //    node with the error nested INSIDE, not a sibling) --
+
+    @Test
+    fun testRecoverImportBad() = doTest(true)
+
+    @Test
+    fun testRecoverExpectStmtBad() = doTest(true)
+
+    @Test
+    fun testRecoverValueDeclBad() = doTest(true)
+
+    @Test
+    fun testRecoverValueAnnoBad() = doTest(true)
+
+    @Test
+    fun testRecoverTypeDeclBad() = doTest(true)
+
+    @Test
+    fun testRecoverVarDeclBad() = doTest(true)
+
+    @Test
+    fun testRecoverIfExprBad() = doTest(true)
+
+    @Test
+    fun testRecoverForExprBad() = doTest(true)
+
+    @Test
+    fun testRecoverDbgExprBad() = doTest(true)
 }
