@@ -390,4 +390,99 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
 
     @Test
     fun testPlatformHeaderTargets() = doTest(true)
+
+    // -- demo-file coverage: highlighterDemoText.roc split into chunks (M6; see Roc.bnf) --
+
+    @Test
+    fun testDemoImport() = doTest(true)
+
+    @Test
+    fun testDemoNumberOperators() = doTest(true)
+
+    @Test
+    fun testDemoBooleanOperators() = doTest(true)
+
+    @Test
+    fun testDemoSimpleMatch() = doTest(true)
+
+    @Test
+    fun testDemoListPatterns() = doTest(true)
+
+    @Test
+    fun testDemoTagUnionMatch() = doTest(true)
+
+    @Test
+    fun testDemoMultilineStr() = doTest(true)
+
+    @Test
+    fun testDemoEffectful() = doTest(true)
+
+    @Test
+    fun testDemoQuestionSuffix() = doTest(true)
+
+    @Test
+    fun testDemoQuestionErrMap() = doTest(true)
+
+    @Test
+    fun testDemoCrash() = doTest(true)
+
+    @Test
+    fun testDemoForLoop() = doTest(true)
+
+    @Test
+    fun testDemoBreak() = doTest(true)
+
+    @Test
+    fun testDemoWhileLoop() = doTest(true)
+
+    @Test
+    fun testDemoDbg() = doTest(true)
+
+    @Test
+    fun testDemoIf() = doTest(true)
+
+    @Test
+    fun testDemoTuple() = doTest(true)
+
+    @Test
+    fun testDemoTypeVar() = doTest(true)
+
+    @Test
+    fun testDemoDestructuring() = doTest(true)
+
+    @Test
+    fun testDemoRecordUpdate() = doTest(true)
+
+    @Test
+    fun testDemoNumberLiterals() = doTest(true)
+
+    @Test
+    fun testDemoOpaqueType() = doTest(true)
+
+    @Test
+    fun testDemoNominalType() = doTest(true)
+
+    @Test
+    fun testDemoEarlyReturn() = doTest(true)
+
+    @Test
+    fun testDemoStaticDispatch() = doTest(true)
+
+    @Test
+    fun testDemoMultiPayloadTag() = doTest(true)
+
+    @Test
+    fun testDemoOpenTagUnion() = doTest(true)
+
+    @Test
+    fun testDemoTypeAlias() = doTest(true)
+
+    @Test
+    fun testDemoWhere() = doTest(true)
+
+    @Test
+    fun testDemoMain() = doTest(true)
+
+    @Test
+    fun testDemoTopLevelExpect() = doTest(true)
 }
