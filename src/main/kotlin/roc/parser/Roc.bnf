@@ -185,6 +185,7 @@ private exposedItemRecover    ::= !(RBRACK | exposedItemFirst)        // exposed
 private patternBracketRecover ::= !(RBRACK | DOUBLE_DOT | patternFirst) // listPattern (has rest)
 private patternParenRecover   ::= !(RPAREN | patternFirst)           // tuplePattern, tagPatternArgs
 private matchBranchRecover    ::= !(RBRACE | patternFirst)           // matchExpr branches (sync on next branch's pattern)
+private lambdaParamRecover    ::= !(OP_BAR | patternFirst)           // lambdaExpr params (closer is OP_BAR, same token as opener)
 private typeAnnoParenRecover  ::= !(RPAREN | typeAnnoFirst)          // typeArguments, tupleType
 private typeParamParenRecover ::= !(RPAREN | typeParamFirst)         // typeHeaderArgs
 private recordPatternRecover  ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordPattern
@@ -567,7 +568,14 @@ matchBranch ::= pattern (KW_IF expr)? OP_FAT_ARROW expr { pin=1 }
 // Closure `|args| body` — patternNoAlts list (alternatives forbidden) between two bars; `||` (no
 // args) allowed (Parser.zig 3012). OP_BAR is a unique lead token (`|>` is the distinct OP_PIZZA,
 // and there is no `||` token — logical-or is KW_OR — so `||` lexes as two OP_BAR).
-lambdaExpr ::= OP_BAR (patternNoAlts (COMMA patternNoAlts)* COMMA?)? OP_BAR expr
+// Params use the comma-list template (see "error recovery" header), except the closer is OP_BAR —
+// the SAME token as the opener (every other list has a distinct bracket closer). Safe because
+// patternFirst excludes OP_BAR, so !OP_BAR / &OP_BAR separate a param from the closing bar; the `*`
+// loop makes the no-arg `||` fall out with zero iterations (no `?` wrapper). Element is patternNoAlts
+// (NOT `pattern`): a top-level `|` alternative would collide with the bar. `pin` on lambdaExpr keeps
+// the node on a missing closing bar — safe since OP_BAR selects lambda uniquely among expr arms.
+lambdaExpr ::= OP_BAR lambdaParamElem* OP_BAR expr { pin=1 }
+private lambdaParamElem ::= !OP_BAR patternNoAlts (COMMA | &OP_BAR) { pin=1 recoverWhile=lambdaParamRecover }
 
 // `for pattern in iterable body` — `for` is an expression in Roc (Parser.zig 3092); pattern is
 // alternatives-forbidden. (The platform header's KW_FOR is a header-only position, never reached

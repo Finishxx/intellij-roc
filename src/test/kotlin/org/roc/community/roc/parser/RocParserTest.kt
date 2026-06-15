@@ -517,6 +517,14 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testRecoverTagUnionBad() = doTest(true)
 
+    // lambda params: a patternNoAlts list whose closer is OP_BAR (same token as the opener).
+    @Test
+    fun testRecoverLambdaParamBad() = doTest(true)
+
+    // missing closing bar — the lambdaExpr pin should keep a LAMBDA_EXPR node around the error.
+    @Test
+    fun testRecoverLambdaUnclosed() = doTest(true)
+
     // -- error recovery: header lists (packages / platform requires/provides/targets) --
 
     @Test

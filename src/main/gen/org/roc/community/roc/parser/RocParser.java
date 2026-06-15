@@ -856,6 +856,71 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // !OP_BAR patternNoAlts (COMMA | &OP_BAR)
+  static boolean lambdaParamElem(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamElem")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = lambdaParamElem_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, patternNoAlts(b, l + 1));
+    r = p && lambdaParamElem_2(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, RocParser::lambdaParamRecover);
+    return r || p;
+  }
+
+  // !OP_BAR
+  private static boolean lambdaParamElem_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamElem_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, OP_BAR);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // COMMA | &OP_BAR
+  private static boolean lambdaParamElem_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamElem_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = lambdaParamElem_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &OP_BAR
+  private static boolean lambdaParamElem_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamElem_2_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, OP_BAR);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(OP_BAR | patternFirst)
+  static boolean lambdaParamRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !lambdaParamRecover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // OP_BAR | patternFirst
+  private static boolean lambdaParamRecover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaParamRecover_0")) return false;
+    boolean r;
+    r = consumeToken(b, OP_BAR);
+    if (!r) r = patternFirst(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
   // COMMENT | OPAQUE_NAME | OP_BACKSLASH
   static boolean lexerOnlyTokens(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lexerOnlyTokens")) return false;
@@ -4407,65 +4472,29 @@ public class RocParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // OP_BAR (patternNoAlts (COMMA patternNoAlts)* COMMA?)? OP_BAR expr
+  // OP_BAR lambdaParamElem* OP_BAR expr
   public static boolean lambdaExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaExpr")) return false;
     if (!nextTokenIsSmart(b, OP_BAR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, LAMBDA_EXPR, null);
     r = consumeTokenSmart(b, OP_BAR);
-    r = r && lambdaExpr_1(b, l + 1);
-    r = r && consumeToken(b, OP_BAR);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, LAMBDA_EXPR, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, lambdaExpr_1(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, OP_BAR)) && r;
+    r = p && expr(b, l + 1, -1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
-  // (patternNoAlts (COMMA patternNoAlts)* COMMA?)?
+  // lambdaParamElem*
   private static boolean lambdaExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaExpr_1")) return false;
-    lambdaExpr_1_0(b, l + 1);
-    return true;
-  }
-
-  // patternNoAlts (COMMA patternNoAlts)* COMMA?
-  private static boolean lambdaExpr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = patternNoAlts(b, l + 1);
-    r = r && lambdaExpr_1_0_1(b, l + 1);
-    r = r && lambdaExpr_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA patternNoAlts)*
-  private static boolean lambdaExpr_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!lambdaExpr_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "lambdaExpr_1_0_1", c)) break;
+      if (!lambdaParamElem(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "lambdaExpr_1", c)) break;
     }
-    return true;
-  }
-
-  // COMMA patternNoAlts
-  private static boolean lambdaExpr_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
-    r = r && patternNoAlts(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean lambdaExpr_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_1_0_2")) return false;
-    consumeTokenSmart(b, COMMA);
     return true;
   }
 
