@@ -18,7 +18,7 @@ dependencies {
     testImplementation(libs.junit)
 
     intellijPlatform {
-        intellijIdea("2025.3.5")
+        intellijIdea("2026.1.3")
         testFramework(TestFrameworkType.Platform)
     }
     testImplementation("junit:junit:4.13.2")

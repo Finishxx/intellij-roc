@@ -19,6 +19,15 @@
         <lang.parserDefinition language="Roc" implementationClass="org.roc.community.roc.parser.RocParserDefinition"/>
         <lang.syntaxHighlighter language="Roc" implementationClass="org.roc.community.roc.colors.RocHighlighter"/>
         <colorSettingsPage implementation="org.roc.community.roc.colors.RocColorsPage"/>
+        <platform.lsp.serverSupportProvider implementation="org.roc.community.roc.lsp.RocLspServerSupportProvider" />
+        <projectConfigurable
+                parentId="language"
+                instance="org.roc.community.roc.settings.RocSettingsConfigurable"
+                id="Settings.Roc"
+                nonDefaultProject="true"
+                key="roc.settings.name"
+                bundle="messages.RocMessageBundle"
+        />
     </extensions>
 
 </idea-plugin>
