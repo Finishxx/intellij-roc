@@ -645,7 +645,7 @@ blockExpr ::= LBRACE blockStmtElem+ RBRACE { pin=1 }
 private blockStmtElem ::= !RBRACE blockStmt { pin=1 recoverWhile=blockStmtRecover }
 
 // Block form of `statement` (see its comment); the concrete node attaches directly under BLOCK_EXPR.
-private blockStmt ::= keywordStmt | valueAnnotation | varDecl | valueDecl | expr
+private blockStmt ::= keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
 
 // == platform header ========================================
 // Shape: platform "name" requires {…} exposes […] packages {…} provides {…} [targets:…]

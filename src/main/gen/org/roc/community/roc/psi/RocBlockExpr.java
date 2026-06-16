@@ -23,6 +23,9 @@ public interface RocBlockExpr extends RocExpr {
   List<RocReturnStmt> getReturnStmtList();
 
   @NotNull
+  List<RocTypeDecl> getTypeDeclList();
+
+  @NotNull
   List<RocValueAnnotation> getValueAnnotationList();
 
   @NotNull

@@ -285,6 +285,11 @@ class RocParsingTest : ParsingTestCase("", "roc", RocParserDefinition()) {
     @Test
     fun testExprBlockAnno() = doTest(true)
 
+    // A local type decl inside a block (`Fmt : fmt`), the left side of a static-dispatch call.
+    // Needs `typeDecl` in blockStmt, not just statement (see Roc.bnf).
+    @Test
+    fun testExprBlockTypeDecl() = doTest(true)
+
     @Test
     fun testExprBlockBareIdent() = doTest(true)
 

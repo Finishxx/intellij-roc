@@ -1,0 +1,1 @@
+decode = |source, format| { Fmt : fmt Fmt.decode_str(format, source) }

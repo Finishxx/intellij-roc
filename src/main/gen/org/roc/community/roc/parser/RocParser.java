@@ -254,12 +254,13 @@ public class RocParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // keywordStmt | valueAnnotation | varDecl | valueDecl | expr
+  // keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
   static boolean blockStmt(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "blockStmt")) return false;
     boolean r;
     r = keywordStmt(b, l + 1);
     if (!r) r = valueAnnotation(b, l + 1);
+    if (!r) r = typeDecl(b, l + 1);
     if (!r) r = varDecl(b, l + 1);
     if (!r) r = valueDecl(b, l + 1);
     if (!r) r = expr(b, l + 1, -1);

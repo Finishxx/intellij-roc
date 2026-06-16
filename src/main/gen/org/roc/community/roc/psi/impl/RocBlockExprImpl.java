@@ -59,6 +59,12 @@ public class RocBlockExprImpl extends RocExprImpl implements RocBlockExpr {
 
   @Override
   @NotNull
+  public List<RocTypeDecl> getTypeDeclList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RocTypeDecl.class);
+  }
+
+  @Override
+  @NotNull
   public List<RocValueAnnotation> getValueAnnotationList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RocValueAnnotation.class);
   }
