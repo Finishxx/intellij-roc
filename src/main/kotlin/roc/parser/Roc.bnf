@@ -131,33 +131,21 @@
 }
 
 root ::= header? rootStmt*
-// Loop-level recovery (rust's RootItem_with_recover): `!<<eof>>` is the pinnable element-1, so
-// `pin=1` commits once we know it's not EOF; `statement` then rolls back per-arm (unpinned) and
-// the wrapper pin fires only after every arm failed — garbage between statements becomes a skipped
-// sibling error and following statements still parse. recoverWhile skips to the next statement start.
 private rootStmt ::= !<<eof>> statement { pin=1 recoverWhile=rootStmtRecover }
 
-// `statement` (top level) and `blockStmt` (in a block) both mirror the reference's single parseStmt;
-// the top_level/in_body differences (import top-level-only, var in-body-only) are later-phase checks.
-// The trailing `expr` is the bare-expression statement (Parser.zig 2140); each decl/anno arm rolls
-// back when its committing `=`/`:` is absent, so `expr` is reached only for a genuine bare expr.
 private statement ::= importStatement | keywordStmt | valueAnnotation | typeDecl | varDecl | valueDecl | expr
 
-// Tokens the lexer emits but no rule consumes (COMMENT is trivia; `@`-opaque names and a lone `\` are
-// tokenizer-only in the reference too, so a rule would invent syntax). NEVER reached from `root` — it
-// exists only so Grammar-Kit keeps generating their RocTypes constants (a no-text token is pruned
-// unless some rule names it), which the generated lexer and RocTokenSets.COMMENTS depend on.
+// Tokens from the lexer, never reached from root, Grammar-kit would not emit their types otherwise
 private lexerOnlyTokens ::= COMMENT | OPAQUE_NAME | OP_BACKSLASH
 
 
 // == error recovery =========================================
-// Comma-list recovery, following the intellij-rust template (RustParser.bnf). Each list is a
-// plain `fooElem*` loop — NOT `item (COMMA item)*`, whose loop body rolls back wholesale when
-// the item fails, so a per-item recoverWhile never fires. Instead every element is shaped:
-//   private fooElem ::= !CLOSER element (COMMA | &CLOSER) { pin=1 recoverWhile=fooRecover }
+// Comma-list recovery - each list is a plain `fooElem*` loop, which works compared
+// to`item (COMMA item)*`, whose loop body rolls back when the item fails, making recovery impossible
+// Every element is shaped: `private fooElem ::= !CLOSER element (COMMA | &CLOSER) { pin=1 recoverWhile=fooRecover }`
 // - leading `!CLOSER` stops the loop at the close bracket (so trailing commas / empty lists
 //   fall out cleanly) and is element 1, so `pin=1` commits the element the moment we know it
-//   isn't the closer — a broken element then RECOVERS instead of rolling back;
+//   isn't the closer - a broken element then RECOVERS instead of rolling back;
 // - `(COMMA | &CLOSER)` carries the separator (comma, or the closer via zero-width lookahead);
 // - recoverWhile skips junk until the next element-start or the closer. It lists the element's
 //   FIRST set and must NOT stop on COMMA, else every element after a bad one stays stranded
@@ -179,32 +167,30 @@ private typeAnnoFirst ::= UPPER_IDENT | LOWER_IDENT | UNDERSCORE | NAMED_UNDERSC
 private typeParamFirst ::= LOWER_IDENT | NAMED_UNDERSCORE | UNDERSCORE
 
 // Recover predicates, named (element)(closer)Recover; shared where element+closer match.
-private exprBracketRecover    ::= !(RBRACK | exprFirst)               // listExpr
-private exprParenRecover      ::= !(RPAREN | exprFirst)               // callArgs, tupleExpr
-private exposedItemRecover    ::= !(RBRACK | exposedItemFirst)        // exposedList
-private patternBracketRecover ::= !(RBRACK | DOUBLE_DOT | patternFirst) // listPattern (has rest)
-private patternParenRecover   ::= !(RPAREN | patternFirst)           // tuplePattern, tagPatternArgs
-private matchBranchRecover    ::= !(RBRACE | patternFirst)           // matchExpr branches (sync on next branch's pattern)
-private lambdaParamRecover    ::= !(OP_BAR | patternFirst)           // lambdaExpr params (closer is OP_BAR, same token as opener)
-private typeAnnoParenRecover  ::= !(RPAREN | typeAnnoFirst)          // typeArguments, tupleType
-private typeParamParenRecover ::= !(RPAREN | typeParamFirst)         // typeHeaderArgs
-private recordPatternRecover  ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordPattern
-private whereClauseRecover    ::= !(RBRACK | LOWER_IDENT)            // whereClause
-// recordType/tagUnionType keep `..ext` structurally last (Parser.zig 3793/3836 break after
-// it), so DOUBLE_DOT is a STOP, not skipped — the field loop hands the ext to a trailing rule.
-private recordTypeFieldRecover ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT) // recordType field
-private tagUnionMemberRecover  ::= !(RBRACK | DOUBLE_DOT | UPPER_IDENT) // tagUnionType member
+private exprBracketRecover    ::= !(RBRACK | exprFirst)
+private exprParenRecover      ::= !(RPAREN | exprFirst)
+private exposedItemRecover    ::= !(RBRACK | exposedItemFirst)
+private patternBracketRecover ::= !(RBRACK | DOUBLE_DOT | patternFirst)
+private patternParenRecover   ::= !(RPAREN | patternFirst)
+private matchBranchRecover    ::= !(RBRACE | patternFirst)
+private lambdaParamRecover    ::= !(OP_BAR | patternFirst)
+private typeAnnoParenRecover  ::= !(RPAREN | typeAnnoFirst)
+private typeParamParenRecover ::= !(RPAREN | typeParamFirst)
+private recordPatternRecover  ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT)
+private whereClauseRecover    ::= !(RBRACK | LOWER_IDENT)
+// recordType/tagUnionType keep `..ext` structurally last so DOUBLE_DOT is a STOP,
+// not skipped — the field loop hands the ext to a trailing rule.
+private recordTypeFieldRecover ::= !(RBRACE | DOUBLE_DOT | LOWER_IDENT)
+private tagUnionMemberRecover  ::= !(RBRACK | DOUBLE_DOT | UPPER_IDENT)
 // header lists — all brace+LOWER_IDENT entry lists share one predicate.
-private braceLowerIdentRecover ::= !(RBRACE | LOWER_IDENT)            // packages, platformProvides, platformTargets, targetLinkType
-private requiresRecover        ::= !(RBRACE | LBRACK | LOWER_IDENT)   // platformRequires entry (may lead with a `[`-for-clause)
-private requiresForRecover     ::= !(RBRACK | UPPER_IDENT)           // requiresForClause aliases
-private targetFileRecover      ::= !(RBRACK | STRING_START | LOWER_IDENT | KW_APP) // targetLinkEntry file list
+private braceLowerIdentRecover ::= !(RBRACE | LOWER_IDENT)
+private requiresRecover        ::= !(RBRACE | LBRACK | LOWER_IDENT)
+private requiresForRecover     ::= !(RBRACK | UPPER_IDENT)
+private targetFileRecover      ::= !(RBRACK | STRING_START | LOWER_IDENT | KW_APP)
 
-// statement loops (root / blockExpr / associatedBlock) — the separator-LESS tier. Roc has no
-// statement separator (newlines are lexer trivia), so the sync set is "statement-start tokens
-// + the closer", exactly the rust RootItem/BlockElement idiom. statementFirst = exprFirst +
-// UNDERSCORE (destructure decl) + the statement keywords; exprFirst already subsumes
-// UPPER_IDENT/LOWER_IDENT/NAMED_UNDERSCORE/literals/brackets, so the anno/decl/expr arms' starts.
+// statement loops (root / blockExpr / associatedBlock) — the separator-LESS tier
+// Roc has no statement separator (newlines are lexer trivia), so the sync set is "statement-start tokens + the closer".
+// statementFirst = exprFirst + UNDERSCORE (destructure decl) + the statement keywords
 private statementFirst ::= KW_IMPORT | KW_EXPECT | KW_CRASH | KW_RETURN | KW_WHILE | KW_BREAK
                          | KW_VAR | UNDERSCORE | exprFirst
 // root has NO closer (EOF is the hard stop), so a stray `}` must be SKIPPED, not stopped on
